@@ -1,6 +1,6 @@
 'use client';
 
-import BlockContainer from '../components/layout/BlockContainer';
+import BlockContainer from '../layout/BlockHandler';
 
 export default function Home() {
 

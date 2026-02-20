@@ -51,9 +51,15 @@ function MathElement({ attributes, element, children }) {
 }
 
 /**
- * Component for CommandInput functionality
+ * BlockEditor - A single Slate editor instance.
+ * 
+ * Each Block gets its own BlockEditor. Content state lives here
+ * inside Slate — NotebookPage only tracks block existence and order.
+ * 
+ * @props onFocus
+ * Called when this editor receives focus (tells NotebookPage to select this block)
  */
-export default function BlockEditor() {
+export default function BlockEditor({ onFocus }) {
     const [showCommands, setShowCommands] = useState(false)
     const [commandPos, setCommandPos] = useState(null)
     const [activeCommandInputPath, setActiveCommandInputPath] = useState(null)
@@ -75,18 +81,7 @@ export default function BlockEditor() {
     const initialValue = useMemo(() => [
         {
             type: 'paragraph',
-            children: [
-                { 
-                    text: 'Type here before ' 
-                },
-                { 
-                    type: 'command-input', 
-                    children: [{ text: 'forall' }] 
-                },
-                { 
-                    text: ' and type here after' 
-                },
-            ],
+            children: [{ text: '' }],
         },
     ], [])
     
@@ -193,11 +188,12 @@ export default function BlockEditor() {
      * - Written in Slate.js, includes the command list UI
      */
     return (
-        <div className="p-1 bg-[#fcfcfc]">
+        <div className="bg-[#f5f5f5] m-1 ps-2">
             <Slate key={HMR_ID} editor={editor} initialValue={initialValue} onChange={handleChange}>
                 <Editable
                     renderElement={renderElement}
                     onKeyDown={handleKeyDown}
+                    onFocus={onFocus}
                     className="text-lg leading-relaxed outline-none"
                     placeholder="Start typing..."
                     spellCheck={false}
