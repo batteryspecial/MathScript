@@ -59,13 +59,14 @@ function MathElement({ attributes, element, children }) {
  * @props onFocus
  * Called when this editor receives focus (tells NotebookPage to select this block)
  */
-export default function BlockEditor({ onFocus }) {
+export default function BlockEditor({ onFocus, isSelected }) {
     const [showCommands, setShowCommands] = useState(false)
     const [commandPos, setCommandPos] = useState(null)
     const [activeCommandInputPath, setActiveCommandInputPath] = useState(null)
     const [filteredCommands, setFilteredCommands] = useState([]) // Filtered commands
     const [selectedIndex, setSelectedIndex] = useState(0) // For arrow key navigation
-    
+    const [editorSelected, setEditorSelected] = useState(false)
+
     const editor = useMemo(() => {
         const e = withHistory(withCommandInput(withReact(createEditor())))
         
@@ -81,7 +82,16 @@ export default function BlockEditor({ onFocus }) {
     const initialValue = useMemo(() => [
         {
             type: 'paragraph',
-            children: [{ text: '' }],
+            
+            children: [
+                { 
+                    type: 'command-input', 
+                    children: [{ text: 'forall' }] 
+                },
+                {
+                    text: ' ',
+                }
+            ],
         },
     ], [])
     
@@ -90,6 +100,10 @@ export default function BlockEditor({ onFocus }) {
      * Updates autocomplete state based on cursor position
      */
     const checkIfInCommandInput = useCallback(() => {
+        if (!isSelected) {
+            setShowCommands(false)
+            return
+        }
         const context = getCommandInputContext(editor)
         
         if (context.isInCommandInput) {
@@ -114,26 +128,19 @@ export default function BlockEditor({ onFocus }) {
         }
     }, [editor])
 
-    /**
-     * Slate's onChange fires whenever content or selection changes
-     * Rule 1: "If we are typing, show the list"
-     */
+    // Slate's onChange fires whenever content or selection changes
+    // We are moving into an inline element called the CommandInput
     const handleChange = useCallback(() => {
         checkIfInCommandInput()
     }, [checkIfInCommandInput])
-    
-    /**
-     * Handle command selection from palette
-     * Uses Autocomplete module function
-     */
+
+    // Handle command selection from palette
+    // Uses Autocomplete module function
     const handleCommandSelect = useCallback((matchData) => {
         handleCommandSelection(editor, activeCommandInputPath, matchData, setShowCommands)
     }, [activeCommandInputPath, editor])
     
-    /**
-     * Callback to show palette when user clicks the backslash
-     * Rule 2: "Click the / span, show it"
-     */
+    // Callback to show palette when user clicks the backslash
     const handleBackslashClick = useCallback((elementPath) => {
         console.log("Backslash clicked!")
         // Move cursor to START of command-input's first text child
@@ -182,25 +189,39 @@ export default function BlockEditor({ onFocus }) {
         }
     }, [editor])
 
+    // INITIALIZES THE CURSOR IN THE EDITABLE DIV
+    useEffect(() => {
+        if (isSelected) {
+            ReactEditor.focus(editor)
+        }
+    }, [])
+
     /**
      * The HTML section
      * - Fully black background, pre-rendered text
      * - Written in Slate.js, includes the command list UI
      */
     return (
-        <div className="bg-[#f5f5f5] m-1 ps-2">
+        <div className={`bg-[#f5f5f5] ps-2 ${editorSelected ? 'border-blue-400 border' : ''}`}>
             <Slate key={HMR_ID} editor={editor} initialValue={initialValue} onChange={handleChange}>
                 <Editable
+                    onFocus={(e) => {
+                        setEditorSelected(true),
+                        onFocus()
+                    }}
+                    onBlur={(e) => {
+                        setEditorSelected(false), // Turn off border
+                        setShowCommands(false)      // Close palette
+                    }}
                     renderElement={renderElement}
                     onKeyDown={handleKeyDown}
-                    onFocus={onFocus}
                     className="text-lg leading-relaxed outline-none"
                     placeholder="Start typing..."
                     spellCheck={false}
                 />
             </Slate>
             
-            {/* Command Palette */}
+            {/*
             {showCommands && commandPos && filteredCommands.length > 0 && (
                 <CommandPalette
                     filteredCommands={filteredCommands}
@@ -211,6 +232,7 @@ export default function BlockEditor({ onFocus }) {
                     onSelect={handleCommandSelect}
                 />
             )}
+            */}
         </div>
     )
 }

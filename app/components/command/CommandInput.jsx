@@ -19,13 +19,13 @@ export default function CommandInput({ attributes, children, element, onBackslas
     const isEmpty = !element.children[0]?.text || element.children[0].text === '\u200B'
 
     return (
-        <span  {...attributes} className={`inline-flex bg-white items-center mx-0.5 transition-all border-x ${
+        <span  {...attributes} className={`inline-flex items-center transition-all border-x border-blue-200 ${
         (selected && focused)
-            ? (isEmpty) ? 'ring-2 ring-red-500' : 'border-blue-500'
-            : (isEmpty) ? 'ring-1 ring-red-600' : 'border-gray-800'
+            ? (isEmpty) ? 'ring-2 ring-red-500' : ''
+            : (isEmpty) ? 'ring-1 ring-red-600' : ''
         }`}>
             {/* Left side: backslash trigger */}
-            <span contentEditable={false} className=" text-gray-400 px-1.5 rounded-l-md select-none cursor-pointer"
+            <span contentEditable={false} className="text-gray-400 px-1.5 rounded-l-md select-none cursor-pointer"
             onMouseDown={(e) => {
                 e.preventDefault() // Prevent default selection behavior
                 e.stopPropagation() // Stop Slate from handling this click

@@ -1,12 +1,12 @@
 'use client';
 
-import BlockContainer from '../layout/BlockHandler';
+import BlockHandler from '../layout/BlockHandler';
 
 export default function Home() {
 
   return (
     <>
-      <BlockContainer />
+      <BlockHandler />
     </>
   );
 }

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useCallback } from "react"
-import Block from '../components/sections/Block'
+import BlockContainer from '../components/editor/BlockContainer'
 
 /**
  * NotebookPage
@@ -19,7 +19,7 @@ export default function BlockHandler() {
     const [blocks, setBlocks] = useState(() => [
         {id: crypto.randomUUID(), type: 'markdown',}
     ])
-    const [selectedBlockId, setSelectedBlockId] = useState(null);
+    const [selectedBlockId, setSelectedBlockId] = useState(blocks[0].id);
 
     // ------------------- CRUD -------------------
 
@@ -77,7 +77,7 @@ export default function BlockHandler() {
             <div className="max-w-full py-4 px-2">
                 <div className="space-y-2">
                     {blocks.map((block) => (
-                        <Block
+                        <BlockContainer
                             key={block.id}
                             id={block.id}
                             isSelected={selectedBlockId === block.id}
