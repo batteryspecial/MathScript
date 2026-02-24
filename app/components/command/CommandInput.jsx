@@ -19,25 +19,26 @@ export default function CommandInput({ attributes, children, element, onBackslas
     const isEmpty = !element.children[0]?.text || element.children[0].text === '\u200B'
 
     return (
-        <span  {...attributes} className={`inline-flex items-center transition-all border-x border-blue-200 ${
-        (selected && focused)
-            ? (isEmpty) ? 'ring-2 ring-red-500' : ''
-            : (isEmpty) ? 'ring-1 ring-red-600' : ''
-        }`}>
-            {/* Left side: backslash trigger */}
-            <span contentEditable={false} className="text-gray-400 px-1.5 rounded-l-md select-none cursor-pointer"
+        <span  {...attributes} className="inline-flex items-center transition-all">
+            <span contentEditable={false} className="text-gray-400 rounded-l-md select-none cursor-pointer"
             onMouseDown={(e) => {
                 e.preventDefault() // Prevent default selection behavior
                 e.stopPropagation() // Stop Slate from handling this click
                 onBackslashClick?.()
             }}>
-                /
+                \
             </span>
-            
-            {/* Right side: editable content (controlled by Slate) */}
-            <span className="text-sm pe-2 rounded-r-md min-w-2">
-                {children}
-            </span>
+            <span className={`${(selected && focused)
+                ? (isEmpty) ? 'text-red-500' : ''
+                : (isEmpty) ? 'text-red-200' : ''
+            }`}>[</span>
+                <span className="text-md px-1 min-w-2">
+                    {children}
+                </span>
+            <span className={`${(selected && focused)
+                ? (isEmpty) ? 'text-red-500' : ''
+                : (isEmpty) ? 'text-red-200' : ''
+            }`}>]</span>
         </span>
     )
 }

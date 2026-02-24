@@ -84,6 +84,9 @@ export default function BlockEditor({ onFocus, isSelected }) {
             type: 'paragraph',
             
             children: [
+                {
+                    text: '',
+                },
                 { 
                     type: 'command-input', 
                     children: [{ text: 'forall' }] 
@@ -221,7 +224,6 @@ export default function BlockEditor({ onFocus, isSelected }) {
                 />
             </Slate>
             
-            {/*
             {showCommands && commandPos && filteredCommands.length > 0 && (
                 <CommandPalette
                     filteredCommands={filteredCommands}
@@ -232,7 +234,6 @@ export default function BlockEditor({ onFocus, isSelected }) {
                     onSelect={handleCommandSelect}
                 />
             )}
-            */}
         </div>
     )
 }
