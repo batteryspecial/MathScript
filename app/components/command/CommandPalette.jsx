@@ -32,18 +32,18 @@ export default function CommandPalette({filteredCommands, position, editor, nodi
                         return (
                             <div 
                                 key={`${cmd.symbol}-${idx}`} 
-                                className="flex flex-row items-center text-black px-3 py-2 hover:bg-slate-300 rounded-lg cursor-pointer" 
+                                className="flex flex-row items-center px-3 py-2 hover:bg-slate-300 rounded-lg cursor-pointer" 
                                 onMouseDown={(e) => { 
                                     e.preventDefault()
                                     onSelect(matchData)
                                 }}
                             >
-                                <div className="w-10 h-10 flex items-center justify-center bg-gray-400 rounded text-xl text-black">
+                                <div className="w-10 h-10 flex items-center justify-center bg-gray-400 rounded text-xl ">
                                     <RenderSymbol latex={cmd.symbol} />
                                 </div>
 
                                 <div className="ms-3 flex flex-col">
-                                    <div className="text-black font-mono text-sm">
+                                    <div className="font-mono text-sm">
                                         {matchLength > 0 ? (
                                             <>
                                                 <span className="font-bold">{boldPart}</span>
@@ -60,8 +60,6 @@ export default function CommandPalette({filteredCommands, position, editor, nodi
                             </div>
                         )
                     }
-                    
-                    
                 })}
             </div>
         </>

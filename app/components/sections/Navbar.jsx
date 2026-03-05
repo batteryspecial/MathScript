@@ -15,53 +15,49 @@ export default function Navbar({ onBack, onCopy, onCut, onPaste, onAdd }) {
   }, []);
 
   // Render placeholder with same dimensions during SSR
-  if (!mounted) {
-    return (
-      <div>
-        <div
-          className="relative flex items-center justify-center overflow-hidden mx-auto"
-          style={{ width: '600px', height: '56px', borderRadius: '9999px' }}
-        />
-      </div>
-    );
-  }
+  if (!mounted) return <div className="h-7.5 w-full bg-[#f7f7f7]" />
+
+  const toolbarLinks = [
+    {
+      icon: <IoArrowBackSharp />, 
+      action: onBack, 
+      label: 'Return',
+    },
+    {
+      icon: <IoAdd />, 
+      action: onAdd, 
+      label: 'Add',
+    },
+    {
+      icon: <FaCut />, 
+      action: onCut, 
+      label: 'Cut',
+    },
+    {
+      icon: <FaCopy />, 
+      action: onCopy, 
+      label: 'Copy',
+    },
+    {
+      icon: <FaPaste />, 
+      action: onPaste, 
+      label: 'Paste',
+    },
+  ]
 
   return (
-    <div className="z-10 max-w-xl mx-auto my-10">
-      <div className='backdrop-blur-md bg-white/10 border border-white/20 shadow-xl rounded-full'>
-        <div className="w-full px-8">
-          <nav className="h-full flex items-center justify-between gap-12">
-            <ul className="flex items-center gap-10">
-              <li>
-                <a className="transition text-sm" href="#">
-                  <IoArrowBackSharp />
-                </a>
-              </li>
-              <li>
-                <a className="transition text-sm" href="#">
-                  <FaCopy />
-                </a>
-              </li>
-              <li>
-                <a className="transition text-sm" href="#">
-                  <FaCut />
-                </a>
-              </li>
-              <li>
-                <a className="transition text-sm" href="#">
-                  <FaPaste />
-                </a>
-              </li>
+      <div className="z-1 backdrop-blur-md max-w-[90vw] bg-white/10 shadow-sm rounded-full mx-auto mb-4">
+          <nav className="flex items-center h-8 px-8 justify-between gap-12">
+            <ul className="flex gap-x-10">
+              {toolbarLinks.map((link, id) => (
+                <li key={id} className='flex items-center'>
+                  <button className='cursor-pointer' onClick={link.action} title={link.label}>
+                    {link.icon}
+                  </button>
+                </li>
+              ))}
             </ul>
-            
-            <button type="button" className="text-gray-700 text-sm transition-all end-0 h-9 rounded-full">
-              <a onClick={onAdd} className='cursor-pointer'>
-                <IoAdd />
-              </a>
-            </button>
           </nav>
-        </div>
       </div>
-    </div>
   );
 }

@@ -20,7 +20,7 @@ export default function CommandInput({ attributes, children, element, onBackslas
 
     return (
         <span  {...attributes} className="inline-flex items-center transition-all">
-            <span contentEditable={false} className="text-gray-400 rounded-l-md select-none cursor-pointer"
+            <span contentEditable={false} className='rounded-l-md select-none cursor-pointer'
             onMouseDown={(e) => {
                 e.preventDefault() // Prevent default selection behavior
                 e.stopPropagation() // Stop Slate from handling this click
@@ -32,9 +32,11 @@ export default function CommandInput({ attributes, children, element, onBackslas
                 ? (isEmpty) ? 'text-red-500' : ''
                 : (isEmpty) ? 'text-red-200' : ''
             }`}>[</span>
+
                 <span className="text-md px-1 min-w-2">
                     {children}
                 </span>
+            
             <span className={`${(selected && focused)
                 ? (isEmpty) ? 'text-red-500' : ''
                 : (isEmpty) ? 'text-red-200' : ''

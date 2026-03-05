@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Q.E.D.",
-  description: "The notebook for mathematical proofs.",
+  description: "The Jupyter notebook for pure mathematics.",
 };
 
 export default function RootLayout({

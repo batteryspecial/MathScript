@@ -1,4 +1,6 @@
 'use client'
+import Filebar from "../components/sections/Filebar"
+import Navbar from "../components/sections/Navbar"
 import { useState, useCallback } from "react"
 import BlockContainer from '../components/editor/BlockContainer'
 
@@ -74,7 +76,12 @@ export default function BlockHandler() {
     // ------------------- RENDER -------------------
     return (
         <>
-            <div className="max-w-full py-4 px-2">
+            <Filebar />
+            <Navbar 
+                onAdd={() => addBlock()} 
+                onCut={() => deleteBlock(selectedBlockId)}
+            />
+            <div className="max-w-full px-2">
                 <div className="space-y-2">
                     {blocks.map((block) => (
                         <BlockContainer

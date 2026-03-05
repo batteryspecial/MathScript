@@ -205,7 +205,7 @@ export default function BlockEditor({ onFocus, isSelected }) {
      * - Written in Slate.js, includes the command list UI
      */
     return (
-        <div className={`bg-[#f5f5f5] ps-2 ${editorSelected ? 'border-blue-400 border' : ''}`}>
+        <div className={`ps-2 border ${editorSelected ? 'border-blue-400' : ''}`}>
             <Slate key={HMR_ID} editor={editor} initialValue={initialValue} onChange={handleChange}>
                 <Editable
                     onFocus={(e) => {
@@ -223,8 +223,8 @@ export default function BlockEditor({ onFocus, isSelected }) {
                     spellCheck={false}
                 />
             </Slate>
-            
-            {showCommands && commandPos && filteredCommands.length > 0 && (
+            {/**
+             * {showCommands && commandPos && filteredCommands.length > 0 && (
                 <CommandPalette
                     filteredCommands={filteredCommands}
                     position={commandPos}
@@ -234,6 +234,7 @@ export default function BlockEditor({ onFocus, isSelected }) {
                     onSelect={handleCommandSelect}
                 />
             )}
+             */}
         </div>
     )
 }
