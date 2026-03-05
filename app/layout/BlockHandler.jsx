@@ -1,9 +1,9 @@
 'use client'
-import Filebar from "../components/sections/Filebar"
-import Navbar from "../components/sections/Navbar"
-import { useState, useCallback } from "react"
-import BlockContainer from '../components/editor/BlockContainer'
+import Navbar from "@/app/components/navigation/Navbar"
+import Filebar from "@/app/components/navigation/Filebar"
+import BlockContainer from '@/app/components/editor/BlockContainer'
 
+import { useState, useCallback } from "react"
 /**
  * NotebookPage
  * 

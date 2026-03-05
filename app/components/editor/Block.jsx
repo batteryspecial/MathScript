@@ -1,4 +1,4 @@
-import BlockEditor from '../../canvas/BlockEditor'
+import BlockEditor from '@/app/canvas/BlockEditor'
 
 /**
  * Block - A Jupyter-style cell with blue indicator bar

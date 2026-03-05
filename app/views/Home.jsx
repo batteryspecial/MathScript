@@ -1,6 +1,6 @@
 'use client';
 
-import BlockHandler from '../layout/BlockHandler';
+import BlockHandler from '@/app/layout/BlockHandler';
 
 export default function Home() {
 

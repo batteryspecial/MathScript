@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 export default function Filebar() {
     const menuRef = useRef(null)
     const [mounted, setMounted] = useState(false)
+    const [hoveredMenu, setHoveredMenu] = useState(null)
     const [activeMenu, setActiveMenu] = useState(null) // track which menu id is active
     
     useEffect(() => {
@@ -23,7 +24,7 @@ export default function Filebar() {
     // switch menus iff a menu is already open
     const handleMouseHover = (id) => {
         if (activeMenu != id) {
-            setActiveMenu(id)
+            setHoveredMenu(id)
         }
     }
 
@@ -79,20 +80,26 @@ export default function Filebar() {
     ]
 
     return (
-        <nav ref={menuRef} className="flex border-b border-[#e7e7e7] mb-4 h-7.5 select-none">
-            <ul className='ms-[5vw] flex items-center'>
+        <nav ref={menuRef} className="flex border-b border-[#e7e7e7] mb-4 select-none">
+            <ul className='flex items-center'>
                 {links.map(it => (
                     <li key={it.id} className='relative'>
                         <button type='button' 
-                            className={`transition text-sm w-20 ${activeMenu === it.id ? 'bg-gray-800' : ''}`}
+                            className={`
+                                transition text-sm h-6 w-20 
+                                ${
+                                    (hoveredMenu === it.id) || (activeMenu === it.id) ? 'dark:bg-gray-800 bg-slate-300' : ''
+                                }
+                            `}
                             onMouseEnter={() => handleMouseHover(it.id)}
+                            onMouseLeave={() => setHoveredMenu(null)}
                             onClick={() => handleMenuClick(it.id)}
                         >
                             {it.label}
                         </button>
                         
                         {activeMenu === it.id && (
-                            <ul className="absolute left-0 top-full z-50 min-w-50 bg-white border border-[#ccc] shadow-md">
+                            <ul className='absolute left-0 top-full z-50 min-w-50 bg-white border border-[#ccc] shadow-md'>
                                 {it.options.map((opt, i) => (
                                     opt.divider ? (
                                     <hr key={i} className="my-1 border-[#e5e5e5]" />

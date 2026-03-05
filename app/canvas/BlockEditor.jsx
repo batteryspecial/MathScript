@@ -7,13 +7,19 @@ import { withHistory } from 'slate-history'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 
-import CommandInput from '../components/command/CommandInput.jsx'
-import { handleKeyPress } from '../../lib/keybinds/KeyDown.js'
-import { commands, nodisplay } from '../../lib/command/CommandList.js'
-import { filterCommands, handleCommandSelection } from '../../lib/command/AutoComplete.js'
-import { withCommandInput, getCommandInputContext, getCommandInputText, shouldShowAutocomplete } from '../../lib/command/CommandInline.js'
-import CommandPalette from '../components/command/CommandPalette.jsx'
+import CommandInput from '@/app/components/command/CommandInput.jsx'
 
+import { handleKeyPress } from '@/lib/keybinds/KeyDown.js'
+import { commands, nodisplay } from '@/lib/command/CommandList.js'
+import { filterCommands, handleCommandSelection } from '@/lib/command/AutoComplete.js'
+import { 
+    withCommandInput, 
+    getCommandInputContext, 
+    getCommandInputText, 
+    shouldShowAutocomplete 
+} from '@/lib/command/CommandInline.js'
+
+//import CommandPalette from '@/app/components/command/CommandPalette.jsx'
 import './canvas.css'
 
 // A randomly generated ID on every browser reload (Next.js Hot Module Reload to enforce modifications to MathNodes)
