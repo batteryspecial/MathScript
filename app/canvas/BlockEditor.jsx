@@ -1,25 +1,20 @@
 'use client'
-import { useMemo, useCallback, useState, useEffect, useRef } from 'react'
-import { createEditor, Editor, Range, Transforms, Node, Path } from 'slate'
-import { Slate, Editable, withReact, ReactEditor, useSelected, useFocused } from 'slate-react'
 import { withHistory } from 'slate-history'
+import { createEditor, Range, Transforms } from 'slate'
+import { useMemo, useCallback, useState, useEffect, useRef } from 'react'
+import { Slate, Editable, withReact, ReactEditor, useSelected, useFocused } from 'slate-react'
 
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 
-import CommandInput from '@/app/components/command/CommandInput.jsx'
-
+import { commands } from '@/lib/command/CommandList.js'
 import { handleKeyPress } from '@/lib/keybinds/KeyDown.js'
-import { commands, nodisplay } from '@/lib/command/CommandList.js'
-import { filterCommands, handleCommandSelection } from '@/lib/command/AutoComplete.js'
-import { 
-    withCommandInput, 
-    getCommandInputContext, 
-    getCommandInputText, 
-    shouldShowAutocomplete 
-} from '@/lib/command/CommandInline.js'
+import { filterCommands } from '@/lib/command/AutoComplete.js'
+import { withCommandInput, getCommandInputContext, getCommandInputText } from '@/lib/command/CommandInline.js'
 
+import CommandInput from '@/app/components/command/CommandInput.jsx'
 //import CommandPalette from '@/app/components/command/CommandPalette.jsx'
+
 import './canvas.css'
 
 // A randomly generated ID on every browser reload (Next.js Hot Module Reload to enforce modifications to MathNodes)
@@ -65,12 +60,10 @@ function MathElement({ attributes, element, children }) {
  * @props onFocus
  * Called when this editor receives focus (tells NotebookPage to select this block)
  */
-export default function BlockEditor({ onFocus, isSelected }) {
-    const [showCommands, setShowCommands] = useState(false)
+export default function BlockEditor({ id, onFocus, isSelected, registerEditor, initialContent }) {
     const [commandPos, setCommandPos] = useState(null)
     const [activeCommandInputPath, setActiveCommandInputPath] = useState(null)
-    const [filteredCommands, setFilteredCommands] = useState([]) // Filtered commands
-    const [selectedIndex, setSelectedIndex] = useState(0) // For arrow key navigation
+    const [filteredCommands, setFilteredCommands] = useState([])
     const [editorSelected, setEditorSelected] = useState(false)
 
     const editor = useMemo(() => {
@@ -84,9 +77,18 @@ export default function BlockEditor({ onFocus, isSelected }) {
         return e
     }, [HMR_ID])
     
+    // This is the bridge that lets BlockHandler read our content.
+    useEffect(() => {
+        if (registerEditor && id) {
+            const cleanup = registerEditor(id, editor)
+            return cleanup
+        }
+    }, [registerEditor, id, editor])
+    
     // Initial value with a command-input element already inserted
-    const initialValue = useMemo(() => [
-        {
+    const initialValue = useMemo(() => {
+        if (initialContent) return initialContent
+        return [{
             type: 'paragraph',
             
             children: [
@@ -95,14 +97,14 @@ export default function BlockEditor({ onFocus, isSelected }) {
                 },
                 { 
                     type: 'command-input', 
-                    children: [{ text: 'forall' }] 
+                    children: [{ text: '' }] 
                 },
                 {
                     text: ' ',
                 }
             ],
-        },
-    ], [])
+        },]
+    }, [])
     
     /**
      * Check if cursor is currently inside a command-input element
@@ -110,7 +112,6 @@ export default function BlockEditor({ onFocus, isSelected }) {
      */
     const checkIfInCommandInput = useCallback(() => {
         if (!isSelected) {
-            setShowCommands(false)
             return
         }
         const context = getCommandInputContext(editor)
@@ -122,18 +123,7 @@ export default function BlockEditor({ onFocus, isSelected }) {
             // Filter commands based on current input
             const inputText = getCommandInputText(context.node)
             const filtered = filterCommands(commands, inputText)
-            //console.log('matches from filterCommands:', filtered, 'is array?', Array.isArray(filtered))
             setFilteredCommands(filtered)
-            
-            // Reset selection if it's out of bounds
-            setSelectedIndex(prev => prev >= filtered.length ? 0 : prev)
-            
-            // Show palette
-            setShowCommands(shouldShowAutocomplete(filtered, true))
-        } else {
-            setShowCommands(false)
-            setActiveCommandInputPath(null)
-            setSelectedIndex(0)
         }
     }, [editor])
 
@@ -142,16 +132,9 @@ export default function BlockEditor({ onFocus, isSelected }) {
     const handleChange = useCallback(() => {
         checkIfInCommandInput()
     }, [checkIfInCommandInput])
-
-    // Handle command selection from palette
-    // Uses Autocomplete module function
-    const handleCommandSelect = useCallback((matchData) => {
-        handleCommandSelection(editor, activeCommandInputPath, matchData, setShowCommands)
-    }, [activeCommandInputPath, editor])
     
     // Callback to show palette when user clicks the backslash
     const handleBackslashClick = useCallback((elementPath) => {
-        console.log("Backslash clicked!")
         // Move cursor to START of command-input's first text child
         const firstTextPath = [...elementPath, 0]
         
@@ -214,33 +197,19 @@ export default function BlockEditor({ onFocus, isSelected }) {
         <div className={`ps-2 border ${editorSelected ? 'border-blue-400' : ''}`}>
             <Slate key={HMR_ID} editor={editor} initialValue={initialValue} onChange={handleChange}>
                 <Editable
+                    className="text-lg leading-relaxed outline-none"
                     onFocus={(e) => {
                         setEditorSelected(true),
                         onFocus()
                     }}
                     onBlur={(e) => {
-                        setEditorSelected(false), // Turn off border
-                        setShowCommands(false)      // Close palette
+                        setEditorSelected(false)
                     }}
                     renderElement={renderElement}
                     onKeyDown={handleKeyDown}
-                    className="text-lg leading-relaxed outline-none"
-                    placeholder="Start typing..."
                     spellCheck={false}
                 />
             </Slate>
-            {/**
-             * {showCommands && commandPos && filteredCommands.length > 0 && (
-                <CommandPalette
-                    filteredCommands={filteredCommands}
-                    position={commandPos}
-                    editor={editor}
-                    nodisplay={nodisplay}
-                    activeCommandInputPath={activeCommandInputPath}
-                    onSelect={handleCommandSelect}
-                />
-            )}
-             */}
         </div>
     )
 }

@@ -4,7 +4,7 @@ import BlockEditor from '@/app/canvas/BlockEditor'
  * Block - A Jupyter-style cell with blue indicator bar
  * Contains a BlockEditor (Slate instance)
  */
-export default function Block({id, onFocus, isSelected}) {
+export default function Block({id, onFocus, isSelected, initialContent, registerEditor}) {
     /**
      * State Decoupling
      * - @param isSelected (Boolean): Managed by the parent (BlockHandler). It controls the Blue Sidebar. It stays true even if you click a button or a menu, as long as that block is the "current" one
@@ -12,7 +12,7 @@ export default function Block({id, onFocus, isSelected}) {
      */
     return (
         <>
-            <BlockEditor onFocus={onFocus} isSelected={isSelected} />
+            <BlockEditor id={id} onFocus={onFocus} isSelected={isSelected} registerEditor={registerEditor} initialContent={initialContent} />
         </>
     )
 }

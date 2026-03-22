@@ -3,25 +3,38 @@ import Navbar from "@/app/components/navigation/Navbar"
 import Filebar from "@/app/components/navigation/Filebar"
 import BlockContainer from '@/app/components/editor/BlockContainer'
 
-import { useState, useCallback } from "react"
+import { useRef, useState, useCallback } from "react"   
+
 /**
  * NotebookPage
  * 
  * A parent component that owns all block states.
  * 
- * This uses the "lifted state" pattern. Every child component
- * (Block, Navbar, BlockToolbar) receives callbacks from here.
- * They never mutate blocks directly.
+ * This uses the "lifted state" pattern. Every child component (Block, Navbar, BlockToolbar) receives callbacks from here. They never mutate blocks directly.
  * 
  * State
- * @param blocks[] Array of { id, type }. Content lives inside each BlockEditor's Slate instance.
- * @selectedBlockId Which block has the blue sidebar. null = none selected.
+ *  @param blocks[] Array of { id, type }. Content lives inside each BlockEditor's Slate instance.
+ *  @selectedBlockId Which block has the blue sidebar. null = none selected.
+ * 
+ * Refs (don't trigger re-renders)
+ *  @param clipboard Last copied Slate content (JSON)
+ *  @param editorRefs Map of blockId → Slate editor instance
  */
 export default function BlockHandler() {
     const [blocks, setBlocks] = useState(() => [
-        {id: crypto.randomUUID(), type: 'markdown',}
+        {id: crypto.randomUUID(), type: 'markdown', }
     ])
     const [selectedBlockId, setSelectedBlockId] = useState(blocks[0].id);
+
+    const clipboard = useRef(null);
+    const editorRefs = useRef({});
+
+    // Called by each Blockeditor on mount, so BlockHandler can see content
+    // Cleanup on unmount deletes the memory, else 
+    const registerEditor = useCallback((id, editor) => {
+        editorRefs.current[id] = editor
+        return () => { delete editorRefs.current[id] }
+    }, [])
 
     // ------------------- CRUD -------------------
 
@@ -32,9 +45,9 @@ export default function BlockHandler() {
      * 
      * @returns A new block.
      */
-    const addBlock = useCallback((afterID = null) => {
+    const addBlock = useCallback((afterID = null, initialContent = null) => {
         // useCallback ensures the other blocks are not re-rendered
-        const newBlock = { id: crypto.randomUUID(), type: 'markdown' }
+        const newBlock = { id: crypto.randomUUID(), type: 'markdown', initialContent }
 
         setBlocks((prev) => {
             if (!afterID) {
@@ -73,23 +86,55 @@ export default function BlockHandler() {
         })
     }, [])
 
+    // ------------------- CLIPBOARD -------------------
+
+    /**
+     * void copy() useCallback, takes current selected
+     * Deep copy using JSON
+     */
+    const copyBlock = useCallback(() => {
+        const editor = editorRefs.current[selectedBlockId]
+        if (!editor) return
+
+        clipboard.current = JSON.parse(JSON.stringify(editor.children))
+    }, [selectedBlockId])
+
+    const cutBlock = useCallback(() => {
+        copyBlock()
+        deleteBlock(selectedBlockId)
+    }, [copyBlock, deleteBlock, selectedBlockId])
+
+    const pasteBlock = useCallback(() => {
+        if (!clipboard.current) return
+
+        const content = JSON.parse(JSON.stringify(clipboard.current))
+        addBlock(selectedBlockId, content)
+    }, [selectedBlockId, addBlock])
+
     // ------------------- RENDER -------------------
     return (
         <>
             <Filebar />
             <Navbar 
                 onAdd={() => addBlock()} 
-                onCut={() => deleteBlock(selectedBlockId)}
+                onCut={() => cutBlock()}
+                onCopy={() => copyBlock()}
+                onPaste={() => pasteBlock()}
             />
             <div className="max-w-full px-2">
                 <div className="space-y-2">
                     {blocks.map((block) => (
                         <BlockContainer
-                            key={block.id}
                             id={block.id}
+                            key={block.id}
+                            
+                            registerEditor={registerEditor}
+                            initialContent={block.initialContent}
+                            
+                            onDelete={() => deleteBlock(block.id)}
                             isSelected={selectedBlockId === block.id}
                             onSelect={() => setSelectedBlockId(block.id)}
-                            onDelete={() => deleteBlock(block.id)}
+                            
                             showDelete={blocks.length > 1}
                         />
                     ))}

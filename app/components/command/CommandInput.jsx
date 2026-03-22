@@ -18,6 +18,13 @@ export default function CommandInput({ attributes, children, element, onBackslas
     // Check if content is truly empty (no text or only ZWS)
     const isEmpty = !element.children[0]?.text || element.children[0].text === '\u200B'
 
+    const renderBorder = (char) => (
+        <span contentEditable={false} className={`select-none ${(selected && focused)
+            ? (isEmpty) ? 'text-red-500' : ''
+            : (isEmpty) ? 'text-red-200' : ''
+        }`}>{char}</span>
+    )
+
     return (
         <span  {...attributes} className="inline-flex items-center transition-all">
             <span contentEditable={false} className='rounded-l-md select-none cursor-pointer'
@@ -28,19 +35,12 @@ export default function CommandInput({ attributes, children, element, onBackslas
             }}>
                 \
             </span>
-            <span className={`${(selected && focused)
-                ? (isEmpty) ? 'text-red-500' : ''
-                : (isEmpty) ? 'text-red-200' : ''
-            }`}>[</span>
 
-                <span className="text-md px-1 min-w-2">
-                    {children}
-                </span>
-            
-            <span className={`${(selected && focused)
-                ? (isEmpty) ? 'text-red-500' : ''
-                : (isEmpty) ? 'text-red-200' : ''
-            }`}>]</span>
+            {renderBorder("[")}
+            <span className="text-md px-1 min-w-2">
+                {children}
+            </span>
+            {renderBorder("]")}
         </span>
     )
 }
