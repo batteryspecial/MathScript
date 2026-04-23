@@ -1,46 +1,36 @@
+// [BACKLOG] CommandInput — Discord-style inline \[command] element for math input.
+// Not currently used. Will be re-integrated when the math input system is built.
+
 'use client'
 import { useSelected, useFocused } from 'slate-react'
 
-/**
- * CommandInput - A Discord-style inline command element
- * 
- * This is an INLINE, NON-VOID element in Slate.
- * - Inline: renders within text flow
- * - Non-void: children are editable through Slate's contentEditable
- * 
- * The "input box" appearance is pure CSS styling.
- * Users type directly into Slate's system - no separate input element.
- */
 export default function CommandInput({ attributes, children, element, onBackslashClick }) {
     const selected = useSelected()
     const focused = useFocused()
 
-    // Check if content is truly empty (no text or only ZWS)
-    const isEmpty = !element.children[0]?.text || element.children[0].text === '\u200B'
-
-    const renderBorder = (char) => (
-        <span contentEditable={false} className={`select-none ${(selected && focused)
-            ? (isEmpty) ? 'text-red-500' : ''
-            : (isEmpty) ? 'text-red-200' : ''
-        }`}>{char}</span>
-    )
+    const isEmpty = !element.children?.[0]?.text?.trim()
+    const showRedBorder = isEmpty && (selected || focused)
 
     return (
-        <span  {...attributes} className="inline-flex items-center transition-all">
-            <span contentEditable={false} className='rounded-l-md select-none cursor-pointer'
-            onMouseDown={(e) => {
-                e.preventDefault() // Prevent default selection behavior
-                e.stopPropagation() // Stop Slate from handling this click
-                onBackslashClick?.()
-            }}>
-                \
+        <span
+            {...attributes}
+            className={`
+                inline-flex items-center rounded px-0.5 font-mono text-sm
+                border transition-colors
+                ${showRedBorder ? 'border-red-400' : 'border-transparent'}
+            `}
+        >
+            <span
+                contentEditable={false}
+                className="select-none text-gray-400 cursor-pointer"
+                onClick={onBackslashClick}
+            >
+                \[
             </span>
-
-            {renderBorder("[")}
-            <span className="text-md px-1 min-w-2">
-                {children}
+            {children}
+            <span contentEditable={false} className="select-none text-gray-400">
+                ]
             </span>
-            {renderBorder("]")}
         </span>
     )
 }

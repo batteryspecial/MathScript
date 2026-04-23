@@ -1,67 +1,32 @@
-`use client`
-import { RenderSymbol } from "@/lib/command/CommandList.js"
-import { getTypedText, getBoldedAliasParts } from "@/lib/command/AutoComplete.js"
+// [BACKLOG] CommandPalette — autocomplete dropdown for the \[command] input.
+// Not currently used. Will be re-integrated when the math input system is built.
 
-/**
- * CommandPalette - Dropdown list of filtered commands
- * 
- * @param {Object} props
- * @param {Array} props.filteredCommands - Array of { command, displayAlias, matchIndex }
- * @param {Object} props.position - { top, left, isAbove }
- * @param {Object} props.editor - Slate editor instance
- * @param {Array} props.activeCommandInputPath - Path to active command-input
- * @param {Function} props.onSelect - Callback when command is selected
- */
-export default function CommandPalette({filteredCommands, position, editor, nodisplay, activeCommandInputPath, onSelect}) {
+'use client'
+import { commands } from '@/lib/inline_utils/CommandList.js'
+import { RenderSymbol } from '@/lib/inline_utils/CommandList.js'
+import { getBoldedAliasParts } from '@/lib/inline_utils/AutoComplete.js'
+
+export default function CommandPalette({ filteredCommands, position, typedText }) {
+    if (!filteredCommands?.length || !position) return null
+
     return (
-        <>
-            <div className="absolute command-palette overflow-y-auto max-h-46 p-2 mt-2 rounded-lg bg-gray-300 border border-gray-600 editor z-10" 
-                style={{
-                    top: `${position.top}px`,
-                    left: `${position.left}px`,
-                    transform: position.isAbove ? 'translateY(-120%)' : 'none'
-                }}>
-                {filteredCommands.map((matchData, idx) => {
-                    const { command: cmd, displayAlias } = matchData
-
-                    // Get typed text and bold parts using Autocomplete helpers
-                    const typedText = getTypedText(editor, activeCommandInputPath)
-                    const { boldPart, normalPart, matchLength } = getBoldedAliasParts(displayAlias, typedText)
-
-                    if (!nodisplay.includes(matchData.command.symbol)) {
-                        return (
-                            <div 
-                                key={`${cmd.symbol}-${idx}`} 
-                                className="flex flex-row items-center px-3 py-2 hover:bg-slate-300 rounded-lg cursor-pointer" 
-                                onMouseDown={(e) => { 
-                                    e.preventDefault()
-                                    onSelect(matchData)
-                                }}
-                            >
-                                <div className="w-10 h-10 flex items-center justify-center bg-gray-400 rounded text-xl ">
-                                    <RenderSymbol latex={cmd.symbol} />
-                                </div>
-
-                                <div className="ms-3 flex flex-col">
-                                    <div className="font-mono text-sm">
-                                        {matchLength > 0 ? (
-                                            <>
-                                                <span className="font-bold">{boldPart}</span>
-                                                <span>{normalPart}</span>
-                                            </>
-                                        ) : (
-                                            displayAlias
-                                        )}
-                                    </div>
-                                    <div className="text-black text-xs mt-1">
-                                        {cmd.description}
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    }
-                })}
-            </div>
-        </>
+        <div
+            className="absolute z-50 bg-white border border-gray-200 rounded shadow-lg py-1 min-w-48"
+            style={{ top: position.top, left: position.left }}
+        >
+            {filteredCommands.map((cmd, i) => {
+                const [before, match, after] = getBoldedAliasParts(cmd.alias, typedText)
+                return (
+                    <div key={i} className="flex items-center gap-3 px-3 py-1 hover:bg-gray-50 cursor-pointer text-sm">
+                        <span className="w-6 text-center font-math">
+                            <RenderSymbol latex={cmd.latex} />
+                        </span>
+                        <span className="text-gray-700">
+                            {before}<strong>{match}</strong>{after}
+                        </span>
+                    </div>
+                )
+            })}
+        </div>
     )
 }

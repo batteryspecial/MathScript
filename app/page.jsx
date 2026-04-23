@@ -1,11 +1,6 @@
-'use client';
-
-import Home from './views/Home'
+'use client'
+import Notebook from '@/app/editor/notebook'
 
 export default function App() {
-  return (
-    <>
-      <Home />
-    </>
-  );
+    return <Notebook />
 }
