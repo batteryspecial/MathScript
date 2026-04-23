@@ -2,9 +2,9 @@
 // Not currently used. Will be re-integrated when the math input system is built.
 
 'use client'
-import { commands } from '@/lib/inline_utils/CommandList.js'
-import { RenderSymbol } from '@/lib/inline_utils/CommandList.js'
-import { getBoldedAliasParts } from '@/lib/inline_utils/AutoComplete.js'
+import { commands } from '@/lib/inline_utils_old/CommandList.js'
+import { RenderSymbol } from '@/lib/inline_utils_old/CommandList.js'
+import { getBoldedAliasParts } from '@/lib/inline_utils_old/AutoComplete.js'
 
 export default function CommandPalette({ filteredCommands, position, typedText }) {
     if (!filteredCommands?.length || !position) return null
