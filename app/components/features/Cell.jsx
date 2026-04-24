@@ -1,5 +1,5 @@
 'use client'
-import Editor from '@/app/editor/editor'
+import Editor from '@/app/editor/Editor'
 import { FaTrash } from 'react-icons/fa'
 
 /**
@@ -14,7 +14,9 @@ import { FaTrash } from 'react-icons/fa'
 export default function Cell({ id, isSelected, onSelect, onDelete, showDelete, initialContent, registerEditor }) {
     return (
         <div className="group flex relative" onClick={onSelect}>
-            <div className={`w-2 me-4 ${isSelected ? 'bg-blue-500' : ''}`} />
+        <div className="w-6 me-0 flex items-stretch cursor-pointer">               
+                <div className={`w-2 ${isSelected ? 'bg-blue-500' : ''}`} />                                                   
+            </div>
             <div className="flex-1">
                 <Editor
                     id={id}

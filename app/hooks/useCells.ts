@@ -45,7 +45,7 @@ export function useCells() {
 
             const index = prev.findIndex(c => c.id === afterId)
             const next = [...prev]
-            next.splice(index + 1, 0, newCell)
+            next.splice(index, 0, newCell)
             return next
         })
 
