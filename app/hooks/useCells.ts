@@ -1,6 +1,9 @@
+// CELL OPERATION LOGIC
+
 'use client'
 import { useRef, useState, useCallback } from 'react'
 import type { Editor, Descendant } from 'slate'
+import { ReactEditor } from 'slate-react'
 
 // A single notebook cell. Content lives inside its Editor instance, not here.
 interface Cell {
@@ -9,34 +12,83 @@ interface Cell {
     initialContent: Descendant[] | null
 }
 
+type cellOperationMode =  'cellWrite' | 'cellOperation'
+
 /**
  * useCells — all notebook state logic.
- *
- * Variables
- *   cells[]     - array of { id, type, initialContent }
- *   selectedId  - which cell has focus/sidebar indicator
- *   editorRefs  - map of cellId → Slate editor instance (for clipboard reads)
- *   clipboard   - last copied Slate content (JSON)
+ * 
+ * @param cells[]     - array of { id, type, initialContent }
+ * @param selectedId  - which cell has focus/sidebar indicator
+ * @param editorRefs  - map of cellId → Slate editor instance (for clipboard reads)
+ * @param clipboard   - last copied Slate content (JSON)
  */
 export function useCells() {
-    const [cells, setCells] = useState<Cell[]>(() => [
-        { id: crypto.randomUUID(), type: 'text', initialContent: null }
-    ])
+    const [cells, setCells] = useState<Cell[]>(() => [{ 
+        id: crypto.randomUUID(), 
+        initialContent: null, 
+        type: 'text', 
+    }])
+
+    const [anchorId, setAnchorId] = useState<string | null>(null)
     const [selectedId, setSelectedId] = useState<string>(cells[0].id)
+    const [cellOpMode, setCellOpMode] = useState<cellOperationMode>(null)
+    const [selectedCellIds, setSelectedCellIds] = useState<Set<string>>(new Set())
 
     const clipboard = useRef<Descendant[] | null>(null)
     const editorRefs = useRef<Record<string, Editor>>({})
-
-    // Each Editor registers itself on mount so we can read its content
+    
+    const selectCell = useCallback((id: string): void => setSelectedId(id), [])
+    
+    // each editor registers itself on mount, caches on re-render
+    // TODO: implement virtualization and condition mounting
     const registerEditor = useCallback((id: string, editor: Editor): () => void => {
         editorRefs.current[id] = editor
-        return () => { delete editorRefs.current[id] }
+        return (() => { delete editorRefs.current[id] })
+    }, [])
+    
+    // MODE
+    const enterCellOperationMode = useCallback((id: string): void => {
+        setAnchorId(id)
+        setSelectedId(id)
+
+        setCellOpMode('cellOperation')
+        setSelectedCellIds(new Set([id]))
+        
+        // blur all editors
+        Object.values(editorRefs.current).forEach(editor => {
+            try { ReactEditor.blur(editor as ReactEditor) } catch {}
+        })
     }, [])
 
-    const selectCell = useCallback((id: string): void => setSelectedId(id), [])
+    const exitCellOperationMode = useCallback((): void => {
+        setCellOpMode('cellWrite')
+        setSelectedCellIds(new Set())
+    }, [])
 
-    // ------------------- CRUD -------------------
+    const cellMultiSelect = useCallback((direction: 'up' | 'down'): void => {
+        const currentIndex = cells.findIndex(c => c.id === selectedId)
+        const targetIndex = (direction === 'up' ? currentIndex - 1 : currentIndex + 1)
 
+        if (targetIndex < 0 || targetIndex >= cells.length) return
+
+        const targetId = cells[targetIndex].id
+        const anchorIndex = cells.findIndex(c => c.id === anchorId)
+        
+        setSelectedId(targetId)
+
+        const start = Math.min(anchorIndex, targetIndex)
+        const end = Math.max(anchorIndex, targetIndex)
+        
+        const nextIds = new Set<string>()
+        for (let i = start; i <= end; i++) {
+            nextIds.add(cells[i].id)
+        }
+
+        setSelectedCellIds(nextIds)
+    }, [cells, selectedId, anchorId])
+
+
+    // CRUD
     const addCell = useCallback((afterId: string | null = null, initialContent: Descendant[] | null = null): void => {
         const newCell: Cell = { id: crypto.randomUUID(), type: 'text', initialContent }
 
@@ -61,13 +113,12 @@ export function useCells() {
 
             const focusIndex = Math.min(index, next.length - 1)
             setSelectedId(next[focusIndex].id)
-
+            setAnchorId(selectedId)
             return next
         })
     }, [])
 
-    // ------------------- CLIPBOARD -------------------
-
+    // CLIPBOARD
     const copyCell = useCallback((): void => {
         const editor = editorRefs.current[selectedId]
         if (!editor) return
@@ -88,7 +139,12 @@ export function useCells() {
     return {
         cells,
         selectedId,
+        cellOpMode,
+        selectedCellIds,
         selectCell,
+        enterCellOperationMode,
+        exitCellOperationMode,
+        cellMultiSelect,
         addCell,
         deleteCell,
         copyCell,
