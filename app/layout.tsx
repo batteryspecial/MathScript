@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Q.E.D.",
+  title: "MathScript",
   description: "The Jupyter notebook for pure mathematics.",
 };
 
