@@ -1,6 +1,6 @@
 'use client'
 import { useCells } from '@/app/hooks/useCells'
-import { useCellOperation } from '@/app/hooks/useCellOp'
+import { useMultiCellSelect } from '@/app/hooks/useMultiCellSelect'
 
 import Cell from '@/app/components/features/Cell'
 import Navbar from '@/app/components/layout/Navbar'
@@ -17,6 +17,7 @@ export default function Notebook() {
         enterCellOperationMode,
         exitCellOperationMode,
         cellMultiSelect,
+        navigateCell,
         addCell,
         deleteCell,
         copyCell,
@@ -25,7 +26,7 @@ export default function Notebook() {
         registerEditor,
     } = useCells()
 
-    useCellOperation({ mode: cellOpMode, extendCellOperationSelect: cellMultiSelect })
+    useMultiCellSelect({ mode: cellOpMode, navigateCell: navigateCell, extendCellOperationSelect: cellMultiSelect })
 
     return (
         <>
