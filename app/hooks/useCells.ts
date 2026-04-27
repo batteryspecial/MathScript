@@ -36,6 +36,7 @@ export function useCells() {
 
     const clipboard = useRef<Descendant[] | null>(null)
     const editorRefs = useRef<Record<string, Editor>>({})
+    const extensionDirection = useRef<'up' | 'down' | null>(null)
 
     const selectCell = useCallback((id: string): void => setSelectedId(id), [])
 
@@ -54,6 +55,8 @@ export function useCells() {
         setCellOpMode('cellOperation')
         setSelectedCellIds(new Set([id]))
 
+        extensionDirection.current = null
+
         // Blur all editors so keyboard events go to the document
         Object.values(editorRefs.current).forEach(editor => {
             try { ReactEditor.blur(editor as ReactEditor) } catch {}
@@ -61,31 +64,61 @@ export function useCells() {
     }, [])
 
     const exitCellOperationMode = useCallback((): void => {
+        extensionDirection.current = null
+
         setCellOpMode('cellWrite')
         setSelectedCellIds(new Set())
     }, [])
 
-    const cellMultiSelect = useCallback((direction: 'up' | 'down'): void => {
-        const currentIndex = cells.findIndex(c => c.id === selectedId)
+    const cellMultiArrowSelect = useCallback((direction: 'up' | 'down'): void => {
+        const currentIndex = cells.findIndex(c => c.id === selectedId) 
+        const anchorIndex = cells.findIndex(c => c.id === anchorId)
         const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
 
         if (targetIndex < 0 || targetIndex >= cells.length) return
+        const movingAway = (direction === 'up') 
+        ? targetIndex < anchorIndex 
+        : targetIndex > anchorIndex
 
+        if (movingAway) {
+            if (extensionDirection.current === null) {
+                extensionDirection.current = direction
+            }
+            else if (extensionDirection.current !== direction) {
+                return
+            }
+        }
+        
         const targetId = cells[targetIndex].id
-        const anchorIndex = cells.findIndex(c => c.id === anchorId)
-
         setSelectedId(targetId)
 
-        const start = Math.min(anchorIndex, targetIndex)
-        const end = Math.max(anchorIndex, targetIndex)
-
-        const nextIds = new Set<string>()
-        for (let i = start; i <= end; i++) {
-            nextIds.add(cells[i].id)
-        }
-
-        setSelectedCellIds(nextIds)
+        setSelectedCellIds(prev => {
+            const ids = new Set(prev)
+            movingAway ? ids.add(targetId) : ids.delete(cells[currentIndex].id)
+            return ids
+        })
     }, [cells, selectedId, anchorId])
+
+    const cellMultiClickSelect = useCallback((nextId: string): void => {
+        setCellOpMode('cellOperation')
+        setSelectedId(nextId)
+        setAnchorId(nextId)
+        setSelectedCellIds(prev => {
+            const newIds = new Set(prev)
+            newIds.has(nextId) || newIds.add(nextId)
+            return newIds
+        })
+
+        // Blur all editors so keyboard events go to the document
+        Object.values(editorRefs.current).forEach(editor => {
+            try { ReactEditor.blur(editor as ReactEditor) } catch {}
+        })
+    }, [selectCell, exitCellOperationMode])
+
+    const onShiftRelease = useCallback((): void => {
+        setAnchorId(selectedId)
+        extensionDirection.current = null
+    }, [selectedId])
 
     // Move selection to the adjacent cell without extending the selection range
     const navigateCell = useCallback((direction: 'up' | 'down'): void => {
@@ -93,6 +126,8 @@ export function useCells() {
         const targetIndex = (direction === 'up') ? currentIndex - 1 : currentIndex + 1;
 
         if (targetIndex < 0 || targetIndex >= cells.length) return
+
+        extensionDirection.current = null
 
         const newId = cells[targetIndex].id
 
@@ -158,7 +193,9 @@ export function useCells() {
         selectCell,
         enterCellOperationMode,
         exitCellOperationMode,
-        cellMultiSelect,
+        cellMultiArrowSelect,
+        onShiftRelease,
+        cellMultiClickSelect,
         navigateCell,
         addCell,
         deleteCell,

@@ -18,7 +18,7 @@ export default function Cell({
         <div className="group flex relative" onClick={onSelect}>
             <div
                 className="w-6 shrink flex items-stretch cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onEnterCellOpMode() }}
+                onClick={(e) => { e.stopPropagation(); onEnterCellOpMode(e) }}
             >
                 <div className={`w-2 ${isSelected ? 'bg-blue-500' : ''}`} />
             </div>

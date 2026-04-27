@@ -7,6 +7,9 @@ import Navbar from '@/app/components/layout/Navbar'
 import Filebar from '@/app/components/layout/Filebar'
 import WideButton from '@/app/components/ui/WideButton'
 
+import { ClickHandler } from '@/lib/keybind-utils/ClickHandler'
+import { exit } from 'node:process'
+
 export default function Notebook() {
     const {
         cells,
@@ -16,7 +19,9 @@ export default function Notebook() {
         selectCell,
         enterCellOperationMode,
         exitCellOperationMode,
-        cellMultiSelect,
+        cellMultiArrowSelect,
+        onShiftRelease,
+        cellMultiClickSelect,
         navigateCell,
         addCell,
         deleteCell,
@@ -26,7 +31,7 @@ export default function Notebook() {
         registerEditor,
     } = useCells()
 
-    useMultiCellSelect({ mode: cellOpMode, navigateCell: navigateCell, extendCellOperationSelect: cellMultiSelect })
+    useMultiCellSelect({ mode: cellOpMode, navigateCell: navigateCell, extendCellOperationSelect: cellMultiArrowSelect, onShiftRelease: onShiftRelease })
 
     return (
         <>
@@ -48,9 +53,8 @@ export default function Notebook() {
                             isOpSelected={selectedCellIds.has(cell.id)}
                             isCellOpMode={cellOpMode === 'cellOperation'}
                             
-                            onEnterCellOpMode={() => enterCellOperationMode(cell.id)}
-                            onSelect={() => { selectCell(cell.id); exitCellOperationMode() }}
-                            
+                            onEnterCellOpMode={(e) => ClickHandler(e, cell.id, cellMultiClickSelect, enterCellOperationMode)}
+                            onSelect={() => {selectCell(cell.id); exitCellOperationMode();}}
                             showDelete={cells.length > 1}
                             onDelete={() => deleteCell(cell.id)}
                             
