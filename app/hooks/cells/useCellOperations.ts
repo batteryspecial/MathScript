@@ -4,7 +4,7 @@ import type { Editor, Descendant } from 'slate'
 import { ReactEditor } from 'slate-react'
 
 // A single notebook cell. Content lives inside its Editor instance, not here.
-interface Cell {
+export interface Cell {
     id: string
     type: string
     initialContent: Descendant[] | null
@@ -166,8 +166,7 @@ export function useCells() {
         })
     }, [selectedId])
 
-    // ------------------- CLIPBOARD -------------------
-
+    // CLIPBOARD
     const copyCell = useCallback((): void => {
         const editor = editorRefs.current[selectedId]
         if (!editor) return
@@ -185,23 +184,95 @@ export function useCells() {
         addCell(selectedId, content)
     }, [selectedId, addCell])
 
-    return {
-        cells,
-        selectedId,
-        cellOpMode,
-        selectedCellIds,
-        selectCell,
-        enterCellOperationMode,
-        exitCellOperationMode,
-        cellMultiArrowSelect,
-        onShiftRelease,
-        cellMultiClickSelect,
-        navigateCell,
-        addCell,
-        deleteCell,
-        copyCell,
-        cutCell,
-        pasteCell,
-        registerEditor,
+    const getEditorContent = useCallback((id: string): Descendant[] => {
+        const editor = editorRefs.current[id]
+        if (!editor) {
+            return [{
+                type: 'paragraph',
+                children: [{ text: '' }],
+                initialContent: null,
+            } as Descendant]
+        }
+
+        return JSON.parse(JSON.stringify(editor.children))  
+    }, [editorRefs])
+
+    const isEditorEmpty = useCallback((id: string): boolean => {
+        const editor = editorRefs.current[id]
+        if (!editor) 
+            return true
+        
+        const children = editor.children as any[]
+        return (children.length === 1) && (children[0]?.children.length === 1) && (children[0]?.children.text === '')
+    }, [editorRefs])
+
+    const selectAllCells = useCallback((): void => {
+        setSelectedCellIds(new Set(cells.map(c => c.id)))
+        setSelectedId(cells[cells.length - 1]?.id)
+        setAnchorId(cells[0]?.id)
+        extensionDirection.current = null
+    }, [cells])
+
+    const pasteMultiCells = useCallback((afterId: string, contents: Descendant[][], replaceAfter = false): void => {
+        const newCells: Cell[] = contents.map(c => ({
+            id: crypto.randomUUID(),
+            type: 'text',
+            initialContent: c,
+        }))
+        
+        setCells(prev => {
+            const idx = prev.findIndex(c => c.id === afterId)
+            return replaceAfter 
+            ? [...prev.slice(0, idx), ...newCells, ...prev.slice(idx+1)]
+            : [...prev.slice(0, idx+1), ...newCells, ...prev.slice(idx+1)]
+        })
+
+        setSelectedId(newCells[newCells.length-1]?.id)
+        setAnchorId(newCells[0]?.id)
+        setSelectedCellIds(new Set(newCells.map(c => c.id)))
+    }, [])
+
+    const deleteMultiCells = useCallback((delIds: Set<string>): void => {
+        setCells(prev => {
+            const remaining = prev.filter(c => !delIds.has(c.id))
+
+            if (remaining.length === 0) {
+                const emptyCell: Cell = {
+                    id: crypto.randomUUID(),
+                    type: 'text',
+                    initialContent: null,
+                }
+                setSelectedId(emptyCell.id)
+                setAnchorId(emptyCell.id)
+                setSelectedCellIds(new Set([emptyCell.id]))
+                
+                return [emptyCell]
+            }
+
+            const delStart = prev.findIndex(c => delIds.has(c.id))
+            
+            const newSelect = (delStart > 0) ? prev[delStart-1] : remaining[0]
+            
+            // single cell selected
+            setSelectedId(newSelect.id)
+            setAnchorId(newSelect.id)
+            setSelectedCellIds(new Set([newSelect.id]))
+                                     
+            return remaining                                                                    
+        })
+    }, [])
+
+    const deleteSelectedCells = useCallback((): void => {
+        deleteMultiCells(selectedCellIds)
+    }, [selectedCellIds, deleteMultiCells])
+
+    return {               
+        cells, cellOpMode,
+        registerEditor, getEditorContent, isEditorEmpty,
+        selectCell, selectedId, selectedCellIds,
+        enterCellOperationMode, exitCellOperationMode,
+        navigateCell, cellMultiArrowSelect, onShiftRelease, cellMultiClickSelect,
+        addCell, deleteCell, copyCell, cutCell, pasteCell,
+        selectAllCells, pasteMultiCells, deleteMultiCells, deleteSelectedCells,
     }
 }

@@ -1,6 +1,7 @@
 'use client'
-import { useCells } from '@/app/hooks/useCells'
-import { useMultiCellSelect } from '@/app/hooks/useMultiCellSelect'
+import { useCells } from '@/app/hooks/cells/useCellOperations'
+import { UseCellClipboard } from '../hooks/cells/useCellClipboard'
+import { useCellOperations } from '@/app/hooks/cells/useCellOperationMode'
 
 import Cell from '@/app/components/features/Cell'
 import Navbar from '@/app/components/layout/Navbar'
@@ -8,39 +9,35 @@ import Filebar from '@/app/components/layout/Filebar'
 import WideButton from '@/app/components/ui/WideButton'
 
 import { ClickHandler } from '@/lib/keybind-utils/ClickHandler'
-import { exit } from 'node:process'
 
 export default function Notebook() {
     const {
-        cells,
-        selectedId,
-        cellOpMode,
-        selectedCellIds,
-        selectCell,
-        enterCellOperationMode,
-        exitCellOperationMode,
-        cellMultiArrowSelect,
-        onShiftRelease,
-        cellMultiClickSelect,
-        navigateCell,
-        addCell,
-        deleteCell,
-        copyCell,
-        cutCell,
-        pasteCell,
-        registerEditor,
+        cells, cellOpMode,
+        registerEditor, getEditorContent, isEditorEmpty,
+        selectCell, selectedId, selectedCellIds,
+        enterCellOperationMode, exitCellOperationMode,
+        navigateCell, cellMultiArrowSelect, onShiftRelease, cellMultiClickSelect,
+        addCell, deleteCell, copyCell, cutCell, pasteCell,
+        selectAllCells, pasteMultiCells, deleteMultiCells, deleteSelectedCells,
     } = useCells()
 
-    useMultiCellSelect({ mode: cellOpMode, navigateCell: navigateCell, extendCellOperationSelect: cellMultiArrowSelect, onShiftRelease: onShiftRelease })
+    const {
+        copySelectedCells, pasteSelectedCells, cutSelectedCells
+    } = UseCellClipboard({ cells, selectedId, selectedCellIds, getEditorContent, isEditorEmpty, pasteMultipleCells: pasteMultiCells, deleteMultipleCells: deleteMultiCells })
+
+    useCellOperations({
+        mode: cellOpMode, navigateCell, extendSelect: cellMultiArrowSelect, onShiftRelease,
+        selectAll: selectAllCells, copySelected: copySelectedCells, cutSelected: cutSelectedCells, pasteSelected: pasteSelectedCells, delSelected: deleteSelectedCells
+    })
 
     return (
         <>
             <Filebar />
             <Navbar
                 onAdd={() => addCell()}
-                onCut={cutCell}
-                onCopy={copyCell}
-                onPaste={pasteCell}
+                onCut={cutSelectedCells}
+                onCopy={copySelectedCells}
+                onPaste={pasteSelectedCells}
             />
             <div className="max-w-full px-2">
                 <div className="space-y-2">
