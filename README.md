@@ -1,4 +1,4 @@
-# QED
+# MathScript
 
 Write mathematical proofs in notebooks online.
 
