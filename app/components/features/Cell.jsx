@@ -1,6 +1,6 @@
 'use client'
 import Editor from '@/app/editor/Editor'
-import { FaTrash } from 'react-icons/fa'
+import { Trash2 } from 'lucide-react'
 
 export default function Cell({
     id,
@@ -39,7 +39,7 @@ export default function Cell({
                     onClick={(e) => { e.stopPropagation(); onDelete() }}
                     className="absolute end-2.5 top-2 duration-150 opacity-0 group-hover:opacity-100 transition-all hover:text-red-400 text-sm cursor-pointer"
                 >
-                    <FaTrash />
+                    <Trash2 size={14} />
                 </button>
             )}
         </div>

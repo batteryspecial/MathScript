@@ -1,11 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-import { IoArrowBackSharp } from "react-icons/io5";
-import { FaCopy } from "react-icons/fa";
-import { FaCut } from "react-icons/fa";
-import { FaPaste } from "react-icons/fa";
-import { IoAdd } from "react-icons/io5";
+import { ArrowLeft, Copy, Scissors, Clipboard, Plus } from "lucide-react";
 
 export default function Navbar({ onBack, onCopy, onCut, onPaste, onAdd }) {
   const [mounted, setMounted] = useState(false);
@@ -19,28 +15,28 @@ export default function Navbar({ onBack, onCopy, onCut, onPaste, onAdd }) {
 
   const toolbarLinks = [
     {
-      icon: <IoArrowBackSharp />, 
-      action: onBack, 
+      icon: <ArrowLeft size={16} />,
+      action: onBack,
       label: 'Return',
     },
     {
-      icon: <IoAdd />, 
-      action: onAdd, 
+      icon: <Plus size={16} />,
+      action: onAdd,
       label: 'Add',
     },
     {
-      icon: <FaCut />, 
-      action: onCut, 
+      icon: <Scissors size={16} />,
+      action: onCut,
       label: 'Cut',
     },
     {
-      icon: <FaCopy />, 
-      action: onCopy, 
+      icon: <Copy size={16} />,
+      action: onCopy,
       label: 'Copy',
     },
     {
-      icon: <FaPaste />, 
-      action: onPaste, 
+      icon: <Clipboard size={16} />,
+      action: onPaste,
       label: 'Paste',
     },
   ]
