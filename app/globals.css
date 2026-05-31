@@ -2,20 +2,75 @@
 @source "../app/**/*.{js,jsx,ts,tsx}";
 @source "../lib/**/*.{js,jsx,ts,tsx}";
 
+/* =========================================================================
+   MathScript design tokens
+   Aesthetic target: retro 2010s academic software (Bootstrap 3 era).
+   Flat surfaces, 1px borders, no gradients/shadows/animations.
+   Do not hardcode these hex values in components — use the variables.
+   ========================================================================= */
 :root {
-  --background: #fcfcfc;
-  --foreground: #171717;
+  /* Sidebar */
+  --ms-sb-bg: #2d3b45;
+  --ms-sb-hover: #38474f;
+  --ms-sb-selected: #1a252f;
+  --ms-sb-text: #bdc9cf;
+  --ms-sb-bright: #ecf0f1;
+  --ms-sb-accent: #3498db;
+  --ms-sb-border: #1e2b32;
+
+  /* Tab bar and toolbar chrome */
+  --ms-tab-bg: #e0e0e0;
+  --ms-tab-active: #ffffff;
+  --ms-tab-border: #c0c0c0;
+  --ms-tb-bg: #f5f5f5;
+  --ms-tb-border: #cccccc;
+
+  /* Editor content */
+  --ms-body: #ffffff;
+  --ms-sec-bg: #f7f7f7;
+  --ms-eq-bg: #f0f5ff;
+
+  /* Primary accent (Bootstrap info blue, Bootstrap 3 era) */
+  --ms-accent: #337ab7;
+  --ms-accent-hover: #2a6496;
+  --ms-accent-light: #d9edf7;
+
+  /* Utility */
+  --ms-border: #dddddd;
+  --ms-text: #333333;
+  --ms-muted: #888888;
+
+  /* Selection highlight (a selected cell) */
+  --ms-selected-bg: #eef4ff;
+
+  /* Type roles */
+  --ms-font-ui: var(--font-lato), "Lato", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  --ms-font-body: Georgia, "Times New Roman", Times, serif;
+  --ms-font-mono: "Courier New", Courier, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base reset — the shell owns all scrolling; nothing else scrolls. */
+html,
+body {
+  height: 100%;
 }
 
 body {
-  font-family: 'KaTeX_Main';
-  background: var(--background);
-  color: var(--foreground);
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--ms-font-ui);
+  font-size: 13px;
+  color: var(--ms-text);
+  background: var(--ms-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Predictable box model everywhere (Tailwind preflight already sets this,
+   but we keep it explicit so the app is correct even without preflight). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }

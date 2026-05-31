@@ -1,0 +1,37 @@
+.tbBtn {
+  background: #fff;
+  border: 1px solid var(--ms-tb-border);
+  border-radius: 3px;
+  font-family: var(--ms-font-ui);
+  font-size: 12px;
+  padding: 3px 9px;
+  cursor: pointer;
+  color: var(--ms-text);
+  line-height: 1.4;
+}
+
+.tbBtn:hover {
+  background: #e8eaec;
+}
+
+.tbBtn:disabled {
+  color: #bbb;
+  cursor: default;
+  background: #fafafa;
+}
+
+.tbBtnActive {
+  background: #dfe3e6;
+}
+
+/* Overrides .tbBtn's background, so it must live in the same (unlayered) module
+   sheet — a Tailwind utility would lose to .tbBtn under CSS layering. */
+.tbAccent {
+  background: var(--ms-accent);
+  color: #fff;
+  border-color: var(--ms-accent);
+}
+
+.tbAccent:hover {
+  background: var(--ms-accent-hover);
+}

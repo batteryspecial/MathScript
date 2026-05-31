@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Lato } from "next/font/google";
 
-import "katex/dist/katex.min.css"
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Self-hosted at build time by next/font — no runtime request to Google,
+// no third-party font CDN in the supply chain.
+const lato = Lato({
+  variable: "--font-lato",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["300", "400", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Q.E.D.",
+  title: "MathScript",
   description: "The Jupyter notebook for pure mathematics.",
 };
 
@@ -26,11 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased not-italic!`}
-      >
-        {children}
-      </body>
+      <body className={lato.variable}>{children}</body>
     </html>
   );
 }

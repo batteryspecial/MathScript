@@ -1,0 +1,24 @@
+.symBtn {
+  width: 28px;
+  height: 26px;
+  border: 1px solid var(--ms-border);
+  border-radius: 2px;
+  background: #fff;
+  font-family: var(--ms-font-mono);
+  font-size: 14px;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.symBtn:hover:not(:disabled) {
+  background: var(--ms-accent-light);
+}
+
+.symBtn:disabled {
+  background: #f8f8f8;
+  color: #ccc;
+  cursor: default;
+}
