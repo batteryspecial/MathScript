@@ -1,0 +1,27 @@
+.eqInput {
+  flex: 1 1 auto;
+  font-family: var(--ms-font-mono);
+  font-size: 13px;
+  border: 1px solid var(--ms-accent);
+  border-radius: 2px;
+  background: #fff;
+  color: #1a1a6e;
+  padding: 4px 8px;
+  outline: none;
+  min-width: 0;
+}
+
+.eqPreview {
+  background: #fff;
+  border: 1px solid var(--ms-border);
+  border-radius: 2px;
+  padding: 4px 14px;
+  font-family: var(--ms-font-mono);
+  font-size: 15px;
+  color: #1a1a6e;
+  max-width: 280px;
+  min-width: 60px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

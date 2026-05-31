@@ -1,0 +1,108 @@
+.cell {
+  position: relative;
+  display: flex;
+  gap: 0;
+  align-items: center;
+  border-bottom: 1px solid var(--ms-border);
+  border-left: 3px solid transparent;
+  background: var(--ms-body);
+  cursor: text;
+}
+
+.typeSection,
+.typeSubsection {
+  background: var(--ms-sec-bg);
+}
+
+.typeEquation {
+  background: var(--ms-eq-bg);
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.cell.selected {
+  background: var(--ms-selected-bg);
+  border-left-color: var(--ms-accent);
+}
+
+.tagCol {
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tag {
+  width: 24px;
+  text-align: center;
+  font-family: var(--ms-font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 14px;
+  border-radius: 2px;
+  border: 1px solid var(--ms-border);
+}
+
+.tagH1 { background: #e0e0e0; color: #555555; }
+.tagH2 { background: #e8e8e8; color: #666666; }
+.tagP { background: #f0f0f0; color: #888888; }
+.tagEq { background: #d4e4f8; color: #2a5587; }
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.equation {
+  font-family: var(--ms-font-mono);
+  font-size: 18px;
+  text-align: center;
+  color: #1a1a6e;
+  padding: 4px 0;
+  word-break: break-word;
+}
+
+.equationPlaceholder {
+  font-family: var(--ms-font-ui);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ms-muted);
+}
+
+.taskbar {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  display: flex;
+  gap: 1px;
+  opacity: 0;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--ms-border);
+  border-radius: 3px;
+}
+
+.cell:hover .taskbar {
+  opacity: 1;
+}
+
+.taskBtn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--ms-muted);
+  cursor: pointer;
+}
+
+.taskBtn:hover {
+  color: var(--ms-text);
+}
+
+.taskBtnDanger:hover {
+  color: #c0392b;
+}
