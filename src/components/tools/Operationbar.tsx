@@ -1,6 +1,6 @@
 "use client";
 import { Plus, Scissors, Copy, Clipboard, CopyPlus } from "lucide-react";
-import type { NotebookAPI } from "@/app/notebook/NotebookAPI";
+import type { NotebookAPI } from "@/lib/notebook/NotebookAPI";
 
 interface OperationbarProps {
   api: NotebookAPI | null;

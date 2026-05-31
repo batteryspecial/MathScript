@@ -1,22 +1,22 @@
 "use client"
 import { useRef, useState } from "react"
 
-import { useWorkspace } from "@/app/hooks/workspace/useWorkspace"
-import { useEquationEditor } from "@/app/hooks/equation/useEquationEditor"
+import { useWorkspace } from "@/hooks/workspace/useWorkspace"
+import { useEquationEditor } from "@/hooks/equation/useEquationEditor"
 
-import Notebook from "@/app/notebook/Notebook"
+import Notebook from "@/notebook/Notebook"
 import type { CellSnapshot } from "@/lib/cells/types"
-import type { NotebookAPI } from "@/app/notebook/NotebookAPI"
+import type { NotebookAPI } from "@/lib/notebook/NotebookAPI"
 
-import Toolbar from "@/app/components/tools/Toolbar"
-import Sidebar from "@/app/components/finder/Sidebar"
-import Filebar from "@/app/components/finder/Filebar"
-import Operationbar from "@/app/components/tools/Operationbar"
+import Toolbar from "@/components/tools/Toolbar"
+import Sidebar from "@/components/finder/Sidebar"
+import Filebar from "@/components/finder/Filebar"
+import Operationbar from "@/components/tools/Operationbar"
 
-import SymbolPanel from "@/app/components/math/equation/SymbolPanel"
-import EquationEditor from "@/app/components/math/equation/EquationEditor"
+import SymbolPanel from "@/components/math/equation/SymbolPanel"
+import EquationEditor from "@/components/math/equation/EquationEditor"
 
-export default function AppShell() {
+export default function AppShell({ id }: { id: string}) {
     const ws = useWorkspace()
     const eqEditor = useEquationEditor()
 

@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Download, Sigma } from "lucide-react";
-import type { NotebookAPI } from "@/app/notebook/NotebookAPI";
-import type { CellType } from "@/app/hooks/cells/useOperations";
+import type { NotebookAPI } from "@/lib/notebook/NotebookAPI";
+import type { CellType } from "@/hooks/cells/useOperations";
 import type { Mark } from "@/lib/slate/marks";
 import { downloadLatex } from "@/lib/latex/export";
 

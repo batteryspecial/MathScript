@@ -2,17 +2,17 @@
 import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react"
 import { ReactEditor } from "slate-react"
 
-import { useCells, type CellType } from "@/app/hooks/cells/useOperations"
-import { useCellOperations } from "@/app/hooks/cells/useOperationMode"
+import { useCells, type CellType } from "@/hooks/cells/useOperations"
+import { useCellOperations } from "@/hooks/cells/useOperationMode"
 
-import Cell from "@/app/components/cell/StandardCell"
+import Cell from "@/components/cell/StandardCell"
 import { ClickHandler } from "@/lib/keybinds/ClickHandler"
 import { isMarkActive, toggleMark, type Mark } from "@/lib/slate/marks"
 import { slateToLatex } from "@/lib/slate/serialize"
 import { buildLatex } from "@/lib/latex/export"
 import type { CustomEditor } from "@/lib/slate/types"
 import type { CellSnapshot } from "@/lib/cells/types"
-import type { NotebookAPI } from "./NotebookAPI"
+import type { NotebookAPI } from "@/lib/notebook/NotebookAPI"
 
 interface NotebookProps {
     fileId: string

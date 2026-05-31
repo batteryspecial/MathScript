@@ -1,5 +1,3 @@
-import AppShell from "@/app/layout/AppShell";
-
 export default function Page() {
-  return <AppShell />;
+    return <div>There's absolutely nothing here.</div>
 }

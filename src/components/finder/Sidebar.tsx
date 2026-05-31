@@ -1,6 +1,6 @@
 "use client";
 import { FileText, Folder, FolderOpen } from "lucide-react";
-import type { Workspace } from "@/app/hooks/workspace/useWorkspace";
+import type { Workspace } from "@/hooks/workspace/useWorkspace";
 
 import styles from "./sidebar.module.css";
 

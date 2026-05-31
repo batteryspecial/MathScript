@@ -1,5 +1,5 @@
 "use client";
-import type { Workspace } from "@/app/hooks/workspace/useWorkspace";
+import type { Workspace } from "@/hooks/workspace/useWorkspace";
 
 import styles from "./filebar.module.css";
 

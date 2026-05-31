@@ -1,4 +1,4 @@
-import type { CellType } from "@/app/hooks/cells/useOperations";
+import type { CellType } from "@/hooks/cells/useOperations";
 import type { Mark } from "@/lib/slate/marks";
 
 export interface SelectedCellInfo {

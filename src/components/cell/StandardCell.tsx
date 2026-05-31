@@ -1,11 +1,11 @@
 "use client";
 import type { Descendant } from "slate";
 
-import Editor, { type EditorVariant } from "@/app/components/editor/Editor";
+import Editor, { type EditorVariant } from "@/components/editor/Editor";
 import CellTaskbar from "./CellTaskbar";
 import styles from "./cell.module.css";
 import { equationToUnicode } from "@/lib/equation";
-import type { CellType } from "@/app/hooks/cells/useOperations";
+import type { CellType } from "@/hooks/cells/useOperations";
 import type { CustomEditor } from "@/lib/slate/types";
 
 const TAG_LABEL: Record<CellType, string> = {
