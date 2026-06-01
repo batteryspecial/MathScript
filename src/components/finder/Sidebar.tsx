@@ -1,8 +1,82 @@
 "use client";
 import { FileText, Folder, FolderOpen } from "lucide-react";
 import type { Workspace } from "@/hooks/workspace/useWorkspace";
+import { baseName } from "@/lib/workspace/filetree";
 
 import styles from "./sidebar.module.css";
+import { TreeNode } from "@/lib/workspace/types";
+
+
+interface RowProps {
+    node: TreeNode,
+    depth: number,
+    isActive: boolean,
+    isEditing: boolean,
+    ws: Workspace,
+}
+
+function SidebarRow({ node, depth, isActive, isEditing, ws }: RowProps) {
+    const isFolder = node.kind === "folder"
+
+    function handleRowClick() {
+        if (isEditing) return
+        isFolder ? ws.toggleFolder(node.id) : ws.openFile(node.id)
+    }
+
+    function handleRowDoubleClick() {
+        if (isFolder) return
+        ws.startEdit(node.id, node.name)
+    }
+
+    const handleOnFocus = (e: React.FocusEvent<HTMLInputElement, Element>) => {
+        const end = baseName(e.target.value).length
+        e.target.setSelectionRange(0, end)
+    }
+
+    const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") ws.commitEdit()
+        if (e.key === "Escape") ws.discardEdit()
+    }
+    
+    return (
+        <div
+            key={node.id}
+            title={node.name}
+            onClick={handleRowClick}
+            onDoubleClick={handleRowDoubleClick}
+            style={{ paddingLeft: 12 + depth * 14 }}
+            className={`${styles.sbRow} ${isActive ? styles.sbRowActive : ""}`}
+        >
+            <span className="flex items-center shrink-0 opacity-85">
+                {isFolder ? (
+                    node.open ? (
+                        <FolderOpen size={13} />
+                    ) : (
+                        <Folder size={13} />
+                    )
+                ) : (
+                    <FileText size={13} />
+                )}
+            </span>
+
+            {isEditing ? (
+                <input
+                    autoFocus
+                    value={ws.draft}
+                    onBlur={ws.commitEdit}
+                    onFocus={handleOnFocus}
+                    onKeyDown={handleEditKeyDown}
+
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => ws.setDraft(e.target.value)}
+                    className="w-full min-w-0 bg-white text-black text-[13px] px-1 rounded-[2px] outline-none"
+                />
+            ) : (
+                <span className="overflow-hidden text-ellipsis">{node.name}</span>
+            )}
+        </div>
+    )
+}
 
 interface SidebarProps {
   ws: Workspace;
@@ -10,54 +84,38 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ ws, cellCount }: SidebarProps) {
-  return (
-    <aside className="flex flex-col flex-none w-[200px] bg-[var(--ms-sb-bg)] text-[var(--ms-sb-text)] border-r border-[var(--ms-sb-border)]">
-      <div className="flex items-center pt-3 px-2.5 pb-2">
-        <span className="text-white text-[14.5px] font-bold">MathScript</span>
-        <span className={styles.sbBadge}>V1</span>
-      </div>
-
-      <div className="flex gap-[5px] px-2.5 pb-2">
-        <button className={styles.sbActionBtn} onClick={() => ws.createFile()}>
-          + File
-        </button>
-        <button className={styles.sbActionBtn} onClick={() => ws.createFolder()}>
-          + Folder
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto pt-1">
-        {ws.visible.map(({ node, depth }) => {
-          const isFolder = node.kind === "folder";
-          const active = !isFolder && node.id === ws.activeFileId;
-          return (
-            <div
-              key={node.id}
-              className={`${styles.sbRow} ${active ? styles.sbRowActive : ""}`}
-              style={{ paddingLeft: 12 + depth * 14 }}
-              title={node.name}
-              onClick={() => (isFolder ? ws.toggleFolder(node.id) : ws.openFile(node.id))}
-            >
-              <span className="flex items-center shrink-0 opacity-85">
-                {isFolder ? (
-                  node.open ? (
-                    <FolderOpen size={13} />
-                  ) : (
-                    <Folder size={13} />
-                  )
-                ) : (
-                  <FileText size={13} />
-                )}
-              </span>
-              <span className="overflow-hidden text-ellipsis">{node.name}</span>
+    return (
+        <aside className="flex flex-col flex-none w-[200px] bg-[var(--ms-sb-bg)] text-[var(--ms-sb-text)] border-r border-[var(--ms-sb-border)]">
+            <div className="flex items-center pt-3 px-2.5 pb-2">
+                <span className="text-white text-[14.5px] font-bold">MathScript</span>
+                <span className={styles.sbBadge}>V1</span>
             </div>
-          );
-        })}
-      </div>
 
-      <div className="px-2.5 py-1.5 text-[11px] text-[var(--ms-sb-text)] border-t border-[var(--ms-sb-border)]">
-        {cellCount} {cellCount === 1 ? "cell" : "cells"}
-      </div>
-    </aside>
-  );
+            <div className="flex gap-[5px] px-2.5 pb-2">
+                <button className={styles.sbActionBtn} onClick={() => ws.createFile()}>
+                    + File
+                </button>
+                <button className={styles.sbActionBtn} onClick={() => ws.createFolder()}>
+                    + Folder
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pt-1">
+                {ws.visible.map(({ node, depth }) => (
+                    <SidebarRow
+                        key={node.id}
+                        node={node}
+                        depth={depth}
+                        isActive={!(node.kind === 'folder') && node.id === ws.activeFileId}
+                        isEditing={ws.editingId === node.id}
+                        ws={ws}
+                    />
+                ))}
+            </div>
+
+            <div className="px-2.5 py-1.5 text-[11px] text-[var(--ms-sb-text)] border-t border-[var(--ms-sb-border)]">
+                {cellCount} {cellCount === 1 ? "cell" : "cells"}
+            </div>
+        </aside>
+    )
 }

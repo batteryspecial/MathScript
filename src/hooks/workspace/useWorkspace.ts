@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import type { FileNode, NodeId, TreeNode, VisibleRow } from "@/lib/workspace/types"
 import { descendantIds, flattenVisible, newId, sanitizeName } from "@/lib/workspace/filetree"
 
@@ -12,7 +12,7 @@ function createInitialWorkspace(): { nodes: TreeNode[]; activeFileId: NodeId | n
     const chapters: TreeNode = {
         id: newId(),
         kind: "folder",
-        name: "chapters",
+        name: "chapters.ms",
         parentId: null,
         open: true,
     }
@@ -39,18 +39,26 @@ function createInitialWorkspace(): { nodes: TreeNode[]; activeFileId: NodeId | n
 
 
 export interface Workspace {
-  visible: VisibleRow[]
-  openTabs: FileNode[]
-  activeFileId: NodeId | null
-  fileName: (id: NodeId | null) => string
-  createFile: (parentId?: NodeId | null) => void
-  createFolder: (parentId?: NodeId | null) => void
-  openFile: (id: NodeId) => void
-  closeTab: (id: NodeId) => void
-  setActive: (id: NodeId) => void
-  toggleFolder: (id: NodeId) => void
-  renameNode: (id: NodeId, name: string) => void
-  deleteNode: (id: NodeId) => void
+    visible: VisibleRow[]
+    openTabs: FileNode[]
+    activeFileId: NodeId | null
+    fileName: (id: NodeId | null) => string
+    createFile: (parentId?: NodeId | null) => void
+    createFolder: (parentId?: NodeId | null) => void
+    openFile: (id: NodeId) => void
+    closeTab: (id: NodeId) => void
+    setActive: (id: NodeId) => void
+    toggleFolder: (id: NodeId) => void
+    renameNode: (id: NodeId, name: string) => void
+    deleteNode: (id: NodeId) => void
+    // inline rename UI state
+    editingId: NodeId | null
+    draft: string
+    setDraft: (draft: string) => void
+    startEdit: (id: NodeId, currName: string) => void
+    cancelEdit: () => void
+    discardEdit: () => void
+    commitEdit: () => void
 }
 
 export function useWorkspace(): Workspace {
@@ -60,6 +68,11 @@ export function useWorkspace(): Workspace {
         seed.activeFileId ? [seed.activeFileId] : [],
     )
     const [activeFileId, setActiveFileId] = useState<NodeId | null>(seed.activeFileId)
+    const [editingId, setEditingId] = useState<NodeId | null>(null)
+    const [draft, setDraft] = useState<string>("")
+
+    // a file created via createFile() shouldn't open immediately until named
+    const pendingOpenId = useRef<NodeId | null>(null)
 
     const fileMap = useMemo(() => {
         const m = new Map<NodeId, TreeNode>()
@@ -69,59 +82,107 @@ export function useWorkspace(): Workspace {
 
     const visible = useMemo(() => flattenVisible(tree), [tree])
 
-    const openTabs = useMemo(
-        () =>
+    const openTabs = useMemo(() => 
         openTabIds
             .map((id) => fileMap.get(id))
-            .filter((n): n is FileNode => n?.kind === "file"),
-        [openTabIds, fileMap],
-    )
+            .filter((n): n is FileNode => n?.kind === "file")
+    , [openTabIds, fileMap])
 
-    const fileName = useCallback(
-        (id: NodeId | null): string => (id ? (fileMap.get(id)?.name ?? "") : ""),
-        [fileMap],
-    )
+    const fileName = useCallback((id: NodeId | null): string => (
+        id ? (fileMap.get(id)?.name ?? "") : ""
+    ), [fileMap])
 
     const openFile = useCallback((id: NodeId) => {
         setOpenTabIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
         setActiveFileId(id)
     }, [])
+    
+    const deleteNode = useCallback((id: NodeId) => {
+        setTree((prev) => {
+            const doomed = descendantIds(prev, id)
+            const next = prev.filter((n) => !doomed.has(n.id))
+            setOpenTabIds((tabs) => tabs.filter((t) => !doomed.has(t)))
+            setActiveFileId((active) => (active && doomed.has(active) ? null : active))
+
+            return next
+        })
+    }, [])
 
     const setActive = useCallback((id: NodeId) => setActiveFileId(id), [])
 
-    const createFile = useCallback(
-        (parentId: NodeId | null = null) => {
-        const file: FileNode = { id: newId(), kind: "file", name: "untitled.ms", parentId }
-        setTree((prev) => [...prev, file])
-        openFile(file.id)
-        },
-        [openFile],
-    )
-
-    const createFolder = useCallback((parentId: NodeId | null = null) => {
-        const folder: TreeNode = {
-        id: newId(),
-        kind: "folder",
-        name: "new folder",
-        parentId,
-        open: true,
-        }
-        setTree((prev) => [...prev, folder])
-    }, [])
-
     const toggleFolder = useCallback((id: NodeId) => {
         setTree((prev) =>
-        prev.map((n) => (n.id === id && n.kind === "folder" ? { ...n, open: !n.open } : n)),
+            prev.map((n) => (n.id === id && n.kind === "folder" ? { ...n, open: !n.open } : n)),
         )
     }, [])
 
     const renameNode = useCallback((id: NodeId, name: string) => {
-        setTree((prev) =>
-        prev.map((n) => (
-            (n.id === id)
-            ? { ...n, name: sanitizeName(name, n.name) } : n
+        setTree((prev) => prev.map((n) => (
+            (n.id === id) ? { ...n, name: sanitizeName(name, n.name) } : n
         )))
     }, [])
+
+    const startEdit = useCallback((id: NodeId, currName: string, ) => {
+        setEditingId(id)
+        setDraft(currName)
+    }, [])
+
+    // open the file that was parked during a create-then-rename, if any
+    const flushPendingOpen = useCallback(() => {
+        const id = pendingOpenId.current
+        pendingOpenId.current = null
+        if (id) openFile(id)
+    }, [openFile])
+
+    const cancelEdit = useCallback(() => {
+        setEditingId(null)
+        flushPendingOpen()
+    }, [flushPendingOpen])
+
+    const discardEdit = useCallback(() => {
+        const pendingId = pendingOpenId.current
+        setEditingId((id) => {
+            if (id && id === pendingId) {
+                deleteNode(id)
+            }
+            return null
+        })
+
+        flushPendingOpen()
+    }, [deleteNode, flushPendingOpen])
+
+    const commitEdit = useCallback(() => {
+        setEditingId((id) => {
+            if (id) {
+                renameNode(id, draft)
+                flushPendingOpen()
+            }
+            return null
+        })
+    }, [renameNode, draft, flushPendingOpen])
+
+    const createFile = useCallback((parentId: NodeId | null = null) => {
+        const file: FileNode = { id: newId(), kind: "file", name: "untitled.ms", parentId }
+
+        setTree((prev) => [...prev, file])
+        // defer the open until the rename ends
+        pendingOpenId.current = file.id
+        startEdit(file.id, file.name)
+    }, [startEdit])
+
+    const createFolder = useCallback((parentId: NodeId | null = null) => {
+        const folder: TreeNode = {
+            id: newId(),
+            kind: "folder",
+            name: "new folder",
+            parentId,
+            open: true,
+        }
+        setTree((prev) => [...prev, folder])
+        pendingOpenId.current = folder.id
+        // folders open nothing, so no focus-steal concern
+        startEdit(folder.id, folder.name)
+    }, [startEdit])
 
     const closeTab = useCallback((id: NodeId) => {
         setOpenTabIds((prev) => {
@@ -137,16 +198,7 @@ export function useWorkspace(): Workspace {
         })
     }, [])
 
-    const deleteNode = useCallback((id: NodeId) => {
-        setTree((prev) => {
-            const doomed = descendantIds(prev, id)
-            const next = prev.filter((n) => !doomed.has(n.id))
-            setOpenTabIds((tabs) => tabs.filter((t) => !doomed.has(t)))
-            setActiveFileId((active) => (active && doomed.has(active) ? null : active))
-
-            return next
-        })
-    }, [])
+    
 
     return {
         visible,
@@ -161,5 +213,12 @@ export function useWorkspace(): Workspace {
         toggleFolder,
         renameNode,
         deleteNode,
+        editingId,
+        draft,
+        setDraft,
+        startEdit,
+        cancelEdit,
+        discardEdit,
+        commitEdit,
     }
 }
