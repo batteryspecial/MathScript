@@ -2,12 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Sigma } from "lucide-react";
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI";
-import type { CellType } from "@/hooks/cells/useOperations";
+import type { CellType } from "@/hooks/cells/useCells";
 import type { Mark } from "@/lib/slate/marks";
 
-import styles from "./toolbar.module.css";
+import styles from "./toolBar.module.css";
 
-interface ToolbarProps {
+interface ToolBarProps {
   api: NotebookAPI | null;
   symbolsOpen: boolean;
   onToggleSymbols: () => void;
@@ -20,7 +20,7 @@ const INSERT_ITEMS: { icon: string; label: string; type: CellType }[] = [
   { icon: "ƒ", label: "Equation", type: "equation" },
 ];
 
-export default function Toolbar({ api, symbolsOpen, onToggleSymbols }: ToolbarProps) {
+export default function ToolBar({ api, symbolsOpen, onToggleSymbols }: ToolBarProps) {
   const [insertOpen, setInsertOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

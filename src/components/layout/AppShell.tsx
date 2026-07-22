@@ -2,26 +2,26 @@
 import { useEffect, useRef, useState } from "react"
 
 import { useWorkspace } from "@/hooks/workspace/useWorkspace"
-import { useEquationEditor } from "@/hooks/equation/useEquationEditor"
+import { useEquationBar } from "@/hooks/equation/useEquationBar"
 import { buildKey } from "@/lib/keybinds/KeyHandler"
 
-import Notebook from "@/notebook/Notebook"
+import NotebookView from "@/notebook/NotebookView"
 import type { CellSnapshot } from "@/lib/cells/types"
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI"
 
-import Toolbar from "@/components/tools/Toolbar"
+import ToolBar from "@/components/tools/ToolBar"
 import ActivityBar from "@/components/finder/ActivityBar"
-import FileExplorer from "@/components/finder/FileExplorer"
+import FileExplorerView from "@/components/finder/FileExplorerView"
 import FileBar from "@/components/finder/FileBar"
 import TabBar from "@/components/finder/TabBar"
-import Operationbar from "@/components/tools/Operationbar"
+import CellOperationsBar from "@/components/tools/CellOperationsBar"
 
 import SymbolPanel from "@/components/math/equation/SymbolPanel"
-import EquationEditor from "@/components/math/equation/EquationEditor"
+import EquationBar from "@/components/math/equation/EquationBar"
 
 export default function AppShell({ id }: { id: string}) {
     const ws = useWorkspace()
-    const eqEditor = useEquationEditor()
+    const eqBar = useEquationBar()
 
     const [symbolsOpen, setSymbolsOpen] = useState(false)
     const [explorerOpen, setExplorerOpen] = useState(true)
@@ -51,7 +51,7 @@ export default function AppShell({ id }: { id: string}) {
     return (
         <div className="flex h-screen overflow-hidden">
             <ActivityBar explorerOpen={explorerOpen} onToggleExplorer={() => setExplorerOpen((v) => !v)} />
-            {explorerOpen && <FileExplorer ws={ws} cellCount={liveAPI?.cellCount ?? 0} />}
+            {explorerOpen && <FileExplorerView ws={ws} cellCount={liveAPI?.cellCount ?? 0} />}
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
                 <FileBar
                     ws={ws}
@@ -63,14 +63,14 @@ export default function AppShell({ id }: { id: string}) {
                     onToggleSymbols={() => setSymbolsOpen((v) => !v)}
                 />
                 <TabBar ws={ws} />
-                <Operationbar api={liveAPI} />
-                <Toolbar
+                <CellOperationsBar api={liveAPI} />
+                <ToolBar
                     api={liveAPI}
                     symbolsOpen={symbolsOpen}
                     onToggleSymbols={() => setSymbolsOpen((v) => !v)}
                 />
                 {symbolsOpen && (
-                    <SymbolPanel canInsert={!!selectedEq} onInsert={eqEditor.insertAtCursor} />
+                    <SymbolPanel canInsert={!!selectedEq} onInsert={eqBar.insertAtCursor} />
                 )}
 
                 <div className="flex-1 overflow-y-auto bg-[var(--ms-body)]">
@@ -92,7 +92,7 @@ export default function AppShell({ id }: { id: string}) {
                                     display: (tab.id === ws.activeFileId) ? "block" : "none"
                                 }}
                             >
-                                <Notebook
+                                <NotebookView
                                     fileId={tab.id}
                                     onAPI={setActiveAPI}
                                     clipboard={clipboard}
@@ -104,8 +104,8 @@ export default function AppShell({ id }: { id: string}) {
                 </div>
 
                 {selectedEq && liveAPI && (
-                    <EquationEditor
-                        inputRef={eqEditor.inputRef}
+                    <EquationBar
+                        inputRef={eqBar.inputRef}
                         value={selectedEq.equationContent}
                         onChange={(v) => liveAPI.setEquationContent(selectedEq.id, v)}
                     />

@@ -1,7 +1,7 @@
 "use client";
 import type { Workspace } from "@/hooks/workspace/useWorkspace";
 
-import styles from "./filebar.module.css";
+import styles from "./tabBar.module.css";
 
 export default function TabBar({ ws }: { ws: Workspace }) {
   return (

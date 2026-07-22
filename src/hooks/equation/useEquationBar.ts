@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 // Owns the equation-bar input element and lets the SymbolPanel insert a glyph
 // at the caret. We set the value through the native setter + dispatch a real
 // `input` event so React's controlled onChange fires and state stays in sync.
-export function useEquationEditor() {
+export function useEquationBar() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const insertAtCursor = useCallback((text: string) => {

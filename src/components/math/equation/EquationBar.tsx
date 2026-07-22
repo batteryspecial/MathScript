@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, type RefObject } from "react";
 import { equationToUnicode } from "@/lib/equation";
-import styles from "./equation.module.css";
+import styles from "./equationBar.module.css";
 
 interface EquationBarProps {
   inputRef: RefObject<HTMLInputElement | null>;
@@ -9,7 +9,7 @@ interface EquationBarProps {
   onChange: (value: string) => void;
 }
 
-export default function EquationEditor({ inputRef, value, onChange }: EquationBarProps) {
+export default function EquationBar({ inputRef, value, onChange }: EquationBarProps) {
   const preview = useMemo(() => equationToUnicode(value), [value]);
 
   return (

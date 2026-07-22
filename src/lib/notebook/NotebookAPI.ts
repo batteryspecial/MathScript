@@ -1,4 +1,4 @@
-import type { CellType } from "@/hooks/cells/useOperations";
+import type { CellType } from "@/hooks/cells/useCells";
 import type { Mark } from "@/lib/slate/marks";
 
 export interface SelectedCellInfo {
@@ -22,7 +22,7 @@ export interface NotebookAPI {
   redo: () => void;
 
   // Cell operations, mode-agnostic — act on the active notebook's effective
-  // target (multi-select set, else the focused cell). Drive the Operationbar.
+  // target (multi-select set, else the focused cell). Drives the CellOperationsBar.
   addCell: () => void;
   copyCells: () => void;
   cutCells: () => void;

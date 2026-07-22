@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react"
 import { ReactEditor } from "slate-react"
 import { HistoryEditor } from "slate-history"
 
-import { useCells, type CellType } from "@/hooks/cells/useOperations"
-import { useCellOperations } from "@/hooks/cells/useOperationMode"
+import { useCells, type CellType } from "@/hooks/cells/useCells"
+import { useCellOperations } from "@/hooks/cells/useCellOperations"
 
-import Cell from "@/components/cell/StandardCell"
+import CellView from "@/components/cell/CellView"
 import { ClickHandler } from "@/lib/keybinds/ClickHandler"
 import { isMarkActive, toggleMark, type Mark } from "@/lib/slate/marks"
 import { slateToLatex } from "@/lib/slate/serialize"
@@ -15,14 +15,14 @@ import type { CustomEditor } from "@/lib/slate/types"
 import type { CellSnapshot } from "@/lib/cells/types"
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI"
 
-interface NotebookProps {
+interface NotebookViewProps {
     fileId: string
     isActive: boolean
     clipboard: RefObject<CellSnapshot[] | null>
     onAPI: (api: NotebookAPI) => void
 }
 
-export default function Notebook({ fileId, isActive, clipboard, onAPI }: NotebookProps) {
+export default function NotebookView({ fileId, isActive, clipboard, onAPI }: NotebookViewProps) {
     const c = useCells(clipboard)
 
     // Inactive documents pass mode=null so their document keydown listener detaches.
@@ -141,7 +141,7 @@ export default function Notebook({ fileId, isActive, clipboard, onAPI }: Noteboo
     return (
         <div className="pb-12">
             {c.cells.map((cell) => (
-                <Cell
+                <CellView
                     id={cell.id}
                     key={cell.id}
                     type={cell.type}

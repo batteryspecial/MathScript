@@ -5,7 +5,7 @@ import Editor, { type EditorVariant } from "@/components/editor/Editor";
 import CellTaskbar from "./CellTaskbar";
 import styles from "./cell.module.css";
 import { equationToUnicode } from "@/lib/equation";
-import type { CellType } from "@/hooks/cells/useOperations";
+import type { CellType } from "@/hooks/cells/useCells";
 import type { CustomEditor } from "@/lib/slate/types";
 
 const TAG_LABEL: Record<CellType, string> = {
@@ -35,7 +35,7 @@ const VARIANT: Record<"text" | "section" | "subsection", EditorVariant> = {
   subsection: "subsection",
 };
 
-interface CellProps {
+interface CellViewProps {
   id: string;
   type: CellType;
   className?: string
@@ -52,7 +52,7 @@ interface CellProps {
   onDelete: () => void;
 }
 
-export default function Cell({
+export default function CellView({
   id,
   type,
   className,
@@ -67,7 +67,7 @@ export default function Cell({
   onMoveDown,
   onDuplicate,
   onDelete,
-}: CellProps) {
+}: CellViewProps) {
   const selected: boolean = autoFocus || isOpSelected;
   const styleName: string = [className, styles.cell, TYPE_CLASS[type], selected && styles.selected].filter(Boolean).join(" ")
   

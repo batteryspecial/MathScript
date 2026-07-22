@@ -2,7 +2,7 @@
 import { Plus, Scissors, Copy, Clipboard, CopyPlus } from "lucide-react";
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI";
 
-interface OperationbarProps {
+interface CellOperationsBarProps {
   api: NotebookAPI | null;
 }
 
@@ -31,7 +31,7 @@ function OpButton({
 
 // Cell operations bar — sits above the formatting Toolbar. Operations run on
 // the active notebook regardless of cell mode (it resolves its own target).
-export default function Operationbar({ api }: OperationbarProps) {
+export default function CellOperationsBar({ api }: CellOperationsBarProps) {
   const disabled = !api;
   return (
     <div className="flex items-center gap-1 bg-[var(--ms-tb-bg)] border-b border-[var(--ms-tb-border)] h-9 px-2.5 shrink-0">

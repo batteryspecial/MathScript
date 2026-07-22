@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-
 import type { Workspace } from "@/hooks/workspace/useWorkspace";
 import { baseName } from "@/lib/workspace/filetree";
 
-import styles from "./fileexplorer.module.css";
+import styles from "./fileExplorerView.module.css";
 import { TreeNode } from "@/lib/workspace/types";
 
 
@@ -84,12 +84,12 @@ function ExplorerRow({ node, depth, isActive, isEditing, ws }: RowProps) {
     )
 }
 
-interface FileExplorerProps {
+interface FileExplorerViewProps {
   ws: Workspace;
   cellCount: number;
 }
 
-export default function FileExplorer({ ws, cellCount }: FileExplorerProps) {
+export default function FileExplorerView({ ws, cellCount }: FileExplorerViewProps) {
     return (
         <aside className="flex flex-col flex-none w-[220px] bg-[var(--ms-sb-bg)] text-[var(--ms-sb-text)] border-r border-[var(--ms-sb-border)]">
             <div className="flex items-center h-8 px-2.5 shrink-0 text-[11px] font-bold tracking-[0.5px] text-[var(--ms-sb-bright)]">
