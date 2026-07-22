@@ -1,6 +1,7 @@
 "use client"
 import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react"
 import { ReactEditor } from "slate-react"
+import { HistoryEditor } from "slate-history"
 
 import { useCells, type CellType } from "@/hooks/cells/useOperations"
 import { useCellOperations } from "@/hooks/cells/useOperationMode"
@@ -65,6 +66,16 @@ export default function Notebook({ fileId, isActive, clipboard, onAPI }: Noteboo
         return ed ? isMarkActive(ed, mark) : false
     }, [c.selectedId])
 
+    const undo = useCallback(() => {
+        const ed = editors.current[c.selectedId]
+        if (ed) HistoryEditor.undo(ed)
+    }, [c.selectedId])
+
+    const redo = useCallback(() => {
+        const ed = editors.current[c.selectedId]
+        if (ed) HistoryEditor.redo(ed)
+    }, [c.selectedId])
+
     const insertCell = useCallback((type: CellType) => {
         c.addCellWithType(c.selectedId, type)
     }, [c.addCellWithType, c.selectedId])
@@ -98,6 +109,8 @@ export default function Notebook({ fileId, isActive, clipboard, onAPI }: Noteboo
         insertCell,
         setEquationContent: c.setCellEquationContent,
         exportLatex,
+        undo,
+        redo,
         addCell: c.addCell,
         copyCells: c.copyCells,
         cutCells: c.cutCells,
@@ -112,6 +125,8 @@ export default function Notebook({ fileId, isActive, clipboard, onAPI }: Noteboo
         insertCell,
         c.setCellEquationContent,
         exportLatex,
+        undo,
+        redo,
         c.addCell,
         c.copyCells,
         c.cutCells,

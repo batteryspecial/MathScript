@@ -71,7 +71,8 @@ export function useWorkspace(): Workspace {
     const [editingId, setEditingId] = useState<NodeId | null>(null)
     const [draft, setDraft] = useState<string>("")
 
-    // a file created via createFile() shouldn't open immediately until named
+    // tracks a freshly created, still-unconfirmed file/folder so an escaped
+    // rename (Escape before Enter) deletes it instead of leaving it orphaned
     const pendingOpenId = useRef<NodeId | null>(null)
 
     const fileMap = useMemo(() => {
@@ -165,10 +166,11 @@ export function useWorkspace(): Workspace {
         const file: FileNode = { id: newId(), kind: "file", name: "untitled.ms", parentId }
 
         setTree((prev) => [...prev, file])
-        // defer the open until the rename ends
+        openFile(file.id)
+        // still tracked: an escaped, never-confirmed rename deletes the file (see discardEdit)
         pendingOpenId.current = file.id
         startEdit(file.id, file.name)
-    }, [startEdit])
+    }, [startEdit, openFile])
 
     const createFolder = useCallback((parentId: NodeId | null = null) => {
         const folder: TreeNode = {

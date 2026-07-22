@@ -9,14 +9,15 @@
    Do not hardcode these hex values in components — use the variables.
    ========================================================================= */
 :root {
-  /* Sidebar */
-  --ms-sb-bg: #2d3b45;
-  --ms-sb-hover: #38474f;
-  --ms-sb-selected: #1a252f;
-  --ms-sb-text: #bdc9cf;
-  --ms-sb-bright: #ecf0f1;
-  --ms-sb-accent: #3498db;
-  --ms-sb-border: #1e2b32;
+  /* Sidebar (file explorer + activity bar) — light grey, unified with the
+     app's primary blue accent (see --ms-accent below). */
+  --ms-sb-bg: #f3f3f3;
+  --ms-sb-hover: #e8e8e8;
+  --ms-sb-selected: #d9edf7;
+  --ms-sb-text: #4b4b4b;
+  --ms-sb-bright: #1e1e1e;
+  --ms-sb-accent: #337ab7;
+  --ms-sb-border: #d4d4d4;
 
   /* Tab bar and toolbar chrome */
   --ms-tab-bg: #e0e0e0;

@@ -1,16 +1,19 @@
 "use client"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { useWorkspace } from "@/hooks/workspace/useWorkspace"
 import { useEquationEditor } from "@/hooks/equation/useEquationEditor"
+import { buildKey } from "@/lib/keybinds/KeyHandler"
 
 import Notebook from "@/notebook/Notebook"
 import type { CellSnapshot } from "@/lib/cells/types"
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI"
 
 import Toolbar from "@/components/tools/Toolbar"
-import Sidebar from "@/components/finder/Sidebar"
-import Filebar from "@/components/finder/Filebar"
+import ActivityBar from "@/components/finder/ActivityBar"
+import FileExplorer from "@/components/finder/FileExplorer"
+import FileBar from "@/components/finder/FileBar"
+import TabBar from "@/components/finder/TabBar"
 import Operationbar from "@/components/tools/Operationbar"
 
 import SymbolPanel from "@/components/math/equation/SymbolPanel"
@@ -21,6 +24,7 @@ export default function AppShell({ id }: { id: string}) {
     const eqEditor = useEquationEditor()
 
     const [symbolsOpen, setSymbolsOpen] = useState(false)
+    const [explorerOpen, setExplorerOpen] = useState(true)
     const [activeAPI, setActiveAPI] = useState<NotebookAPI | null>(null)
 
     // one clipboard shared by every open notebook
@@ -31,16 +35,37 @@ export default function AppShell({ id }: { id: string}) {
     const liveAPI = (activeAPI && activeAPI.fileId === ws.activeFileId) ? activeAPI : null
     const selectedEq = (liveAPI && liveAPI.selectedCell?.type === "equation") ? liveAPI.selectedCell : null
 
+    // Ctrl/Cmd+W closes the active tab instead of the browser tab. Always on,
+    // regardless of cell mode — closing a tab isn't a cell operation.
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            const key = buildKey(e)
+            if (key !== "Meta+w" && key !== "Ctrl+w") return
+            e.preventDefault()
+            if (ws.activeFileId) ws.closeTab(ws.activeFileId)
+        }
+        document.addEventListener("keydown", onKeyDown)
+        return () => document.removeEventListener("keydown", onKeyDown)
+    }, [ws.activeFileId, ws.closeTab])
 
     return (
         <div className="flex h-screen overflow-hidden">
-            <Sidebar ws={ws} cellCount={liveAPI?.cellCount ?? 0} />
+            <ActivityBar explorerOpen={explorerOpen} onToggleExplorer={() => setExplorerOpen((v) => !v)} />
+            {explorerOpen && <FileExplorer ws={ws} cellCount={liveAPI?.cellCount ?? 0} />}
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                <Filebar ws={ws} />
+                <FileBar
+                    ws={ws}
+                    api={liveAPI}
+                    fileName={ws.fileName(ws.activeFileId)}
+                    explorerOpen={explorerOpen}
+                    onToggleExplorer={() => setExplorerOpen((v) => !v)}
+                    symbolsOpen={symbolsOpen}
+                    onToggleSymbols={() => setSymbolsOpen((v) => !v)}
+                />
+                <TabBar ws={ws} />
                 <Operationbar api={liveAPI} />
                 <Toolbar
                     api={liveAPI}
-                    fileName={ws.fileName(ws.activeFileId)}
                     symbolsOpen={symbolsOpen}
                     onToggleSymbols={() => setSymbolsOpen((v) => !v)}
                 />
@@ -60,11 +85,11 @@ export default function AppShell({ id }: { id: string}) {
                         </button>
                         </div>
                     ) : (ws.openTabs.map((tab) => (
-                            <div 
-                                key={tab.id} 
-                                className="h-full" 
-                                style={{ 
-                                    display: (tab.id === ws.activeFileId) ? "block" : "none" 
+                            <div
+                                key={tab.id}
+                                className="h-full"
+                                style={{
+                                    display: (tab.id === ws.activeFileId) ? "block" : "none"
                                 }}
                             >
                                 <Notebook

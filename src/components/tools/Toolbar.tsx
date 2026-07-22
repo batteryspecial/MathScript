@@ -1,19 +1,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Download, Sigma } from "lucide-react";
+import { Sigma } from "lucide-react";
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI";
 import type { CellType } from "@/hooks/cells/useOperations";
 import type { Mark } from "@/lib/slate/marks";
-import { downloadLatex } from "@/lib/latex/export";
 
 import styles from "./toolbar.module.css";
 
 interface ToolbarProps {
   api: NotebookAPI | null;
-  fileName: string;
   symbolsOpen: boolean;
   onToggleSymbols: () => void;
-
 }
 
 const INSERT_ITEMS: { icon: string; label: string; type: CellType }[] = [
@@ -23,7 +20,7 @@ const INSERT_ITEMS: { icon: string; label: string; type: CellType }[] = [
   { icon: "ƒ", label: "Equation", type: "equation" },
 ];
 
-export default function Toolbar({ api, fileName, symbolsOpen, onToggleSymbols }: ToolbarProps) {
+export default function Toolbar({ api, symbolsOpen, onToggleSymbols }: ToolbarProps) {
   const [insertOpen, setInsertOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -119,17 +116,6 @@ export default function Toolbar({ api, fileName, symbolsOpen, onToggleSymbols }:
       </div>
 
       <div className="flex-1" />
-
-      <button
-        className={`${styles.tbBtn} ${styles.tbAccent}`}
-        disabled={disabled}
-        onClick={() => api && downloadLatex(api.exportLatex(), fileName || "document")}
-        title="Export to LaTeX"
-      >
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-          <Download size={13} /> Export LaTeX
-        </span>
-      </button>
     </div>
   );
 }

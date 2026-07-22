@@ -18,6 +18,8 @@ export interface NotebookAPI {
   insertCell: (type: CellType) => void;
   setEquationContent: (id: string, src: string) => void;
   exportLatex: () => string;
+  undo: () => void;
+  redo: () => void;
 
   // Cell operations, mode-agnostic — act on the active notebook's effective
   // target (multi-select set, else the focused cell). Drive the Operationbar.

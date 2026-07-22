@@ -23,15 +23,3 @@
 .tbBtnActive {
   background: #dfe3e6;
 }
-
-/* Overrides .tbBtn's background, so it must live in the same (unlayered) module
-   sheet — a Tailwind utility would lose to .tbBtn under CSS layering. */
-.tbAccent {
-  background: var(--ms-accent);
-  color: #fff;
-  border-color: var(--ms-accent);
-}
-
-.tbAccent:hover {
-  background: var(--ms-accent-hover);
-}

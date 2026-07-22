@@ -1,9 +1,9 @@
 "use client";
-import { FileText, Folder, FolderOpen } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-react";
 import type { Workspace } from "@/hooks/workspace/useWorkspace";
 import { baseName } from "@/lib/workspace/filetree";
 
-import styles from "./sidebar.module.css";
+import styles from "./fileexplorer.module.css";
 import { TreeNode } from "@/lib/workspace/types";
 
 
@@ -15,7 +15,7 @@ interface RowProps {
     ws: Workspace,
 }
 
-function SidebarRow({ node, depth, isActive, isEditing, ws }: RowProps) {
+function ExplorerRow({ node, depth, isActive, isEditing, ws }: RowProps) {
     const isFolder = node.kind === "folder"
 
     function handleRowClick() {
@@ -37,16 +37,22 @@ function SidebarRow({ node, depth, isActive, isEditing, ws }: RowProps) {
         if (e.key === "Enter") ws.commitEdit()
         if (e.key === "Escape") ws.discardEdit()
     }
-    
+
     return (
         <div
             key={node.id}
             title={node.name}
             onClick={handleRowClick}
             onDoubleClick={handleRowDoubleClick}
-            style={{ paddingLeft: 12 + depth * 14 }}
+            style={{ paddingLeft: 4 + depth * 14 }}
             className={`${styles.sbRow} ${isActive ? styles.sbRowActive : ""}`}
         >
+            <span className="flex items-center shrink-0 opacity-60 w-4 justify-center">
+                {isFolder ? (
+                    node.open ? <ChevronDown size={13} /> : <ChevronRight size={13} />
+                ) : null}
+            </span>
+
             <span className="flex items-center shrink-0 opacity-85">
                 {isFolder ? (
                     node.open ? (
@@ -78,31 +84,21 @@ function SidebarRow({ node, depth, isActive, isEditing, ws }: RowProps) {
     )
 }
 
-interface SidebarProps {
+interface FileExplorerProps {
   ws: Workspace;
   cellCount: number;
 }
 
-export default function Sidebar({ ws, cellCount }: SidebarProps) {
+export default function FileExplorer({ ws, cellCount }: FileExplorerProps) {
     return (
-        <aside className="flex flex-col flex-none w-[200px] bg-[var(--ms-sb-bg)] text-[var(--ms-sb-text)] border-r border-[var(--ms-sb-border)]">
-            <div className="flex items-center pt-3 px-2.5 pb-2">
-                <span className="text-white text-[14.5px] font-bold">MathScript</span>
-                <span className={styles.sbBadge}>V1</span>
+        <aside className="flex flex-col flex-none w-[220px] bg-[var(--ms-sb-bg)] text-[var(--ms-sb-text)] border-r border-[var(--ms-sb-border)]">
+            <div className="flex items-center h-8 px-2.5 shrink-0 text-[11px] font-bold tracking-[0.5px] text-[var(--ms-sb-bright)]">
+                EXPLORER
             </div>
 
-            <div className="flex gap-[5px] px-2.5 pb-2">
-                <button className={styles.sbActionBtn} onClick={() => ws.createFile()}>
-                    + File
-                </button>
-                <button className={styles.sbActionBtn} onClick={() => ws.createFolder()}>
-                    + Folder
-                </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto pt-1">
+            <div className="flex-1 overflow-y-auto pt-0.5">
                 {ws.visible.map(({ node, depth }) => (
-                    <SidebarRow
+                    <ExplorerRow
                         key={node.id}
                         node={node}
                         depth={depth}
