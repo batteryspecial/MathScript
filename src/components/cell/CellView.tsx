@@ -1,10 +1,11 @@
 "use client";
+import { useMemo } from "react";
 import type { Descendant } from "slate";
+import katex from "katex";
 
 import Editor, { type EditorVariant } from "@/components/editor/Editor";
 import CellTaskbar from "./CellTaskbar";
 import styles from "./cell.module.css";
-import { equationToUnicode } from "@/lib/equation";
 import type { CellType } from "@/hooks/cells/useCells";
 import type { CustomEditor } from "@/lib/slate/types";
 
@@ -110,10 +111,22 @@ export default function CellView({
 }
 
 function EquationDisplay({ src }: { src: string }) {
-  const rendered = src.trim() ? equationToUnicode(src) : "";
+  const html = useMemo(() => {
+    if (!src.trim()) return null;
+    try {
+      return katex.renderToString(src, { throwOnError: false, displayMode: true });
+    } catch {
+      return null;
+    }
+  }, [src]);
+
+  if (html) return <div className={styles.equation} dangerouslySetInnerHTML={{ __html: html }} />;
+
   return (
     <div className={styles.equation}>
-      {rendered || (
+      {src.trim() ? (
+        <span className={styles.equationPlaceholder}>{src}</span>
+      ) : (
         <span className={styles.equationPlaceholder}>empty equation — edit below</span>
       )}
     </div>

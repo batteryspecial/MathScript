@@ -17,7 +17,7 @@ import TabBar from "@/components/finder/TabBar"
 import CellOperationsBar from "@/components/tools/CellOperationsBar"
 
 import SymbolPanel from "@/components/math/equation/SymbolPanel"
-import EquationBar from "@/components/math/equation/EquationBar"
+import EquationEditor from "@/components/math/equation/EquationEditor"
 
 export default function AppShell({ id }: { id: string}) {
     const ws = useWorkspace()
@@ -104,8 +104,8 @@ export default function AppShell({ id }: { id: string}) {
                 </div>
 
                 {selectedEq && liveAPI && (
-                    <EquationBar
-                        inputRef={eqBar.inputRef}
+                    <EquationEditor
+                        fieldRef={eqBar.fieldRef}
                         value={selectedEq.equationContent}
                         onChange={(v) => liveAPI.setEquationContent(selectedEq.id, v)}
                     />

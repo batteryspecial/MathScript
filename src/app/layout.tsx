@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 
 import "./globals.css";
+import "katex/dist/katex.min.css";
 
 // Self-hosted at build time by next/font — no runtime request to Google,
 // no third-party font CDN in the supply chain.

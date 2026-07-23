@@ -1,5 +1,3 @@
-import { equationToLatex } from "@/lib/equation";
-
 export type ExportCellType = "text" | "section" | "subsection" | "equation";
 
 export interface ExportCell {
@@ -12,8 +10,8 @@ export interface ExportCell {
  * Assemble a compilable LaTeX document from the notebook cells.
  *
  * `getText(id)` must return LaTeX-ready inline content for prose cells
- * (already escaped, marks already applied). Equation cells are compiled here
- * from their light custom syntax via the equation engine.
+ * (already escaped, marks already applied). Equation cells already hold
+ * real LaTeX in `equationContent` — MathQuill serializes it as you type.
  */
 export function buildLatex(cells: ExportCell[], getText: (id: string) => string): string {
   const lines: string[] = [
@@ -40,7 +38,7 @@ export function buildLatex(cells: ExportCell[], getText: (id: string) => string)
         break;
       }
       case "equation": {
-        const tex = equationToLatex(cell.equationContent ?? "").trim();
+        const tex = (cell.equationContent ?? "").trim();
         lines.push("\\begin{equation}", `  ${tex}`, "\\end{equation}", "");
         break;
       }

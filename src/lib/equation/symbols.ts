@@ -245,3 +245,17 @@ export function isInfixLexeme(lexeme: string): boolean {
   const sym = symbolByKey.get(lexeme) ?? symbolByGlyph.get(lexeme);
   return sym?.infix ?? false;
 }
+
+/**
+ * Space-delimited command list for MathQuill's `autoCommands` config: typing
+ * one of these words (no backslash) auto-converts it to the symbol as you
+ * type, e.g. "forall" -> ∀.
+ *
+ * MathQuill requires every entry be letters-only, length >= 2, and *not*
+ * already one of its built-in operator names (sin, log, deg, inf, ...) —
+ * passing one of those throws at field-mount time. KNOWN_FUNCTIONS is
+ * MathQuill's operator-name set, so anything overlapping it is excluded.
+ */
+export const AUTO_COMMANDS: string = [...new Set(SYMBOLS.map((s) => s.key))]
+  .filter((key) => key.length >= 2 && !(key in KNOWN_FUNCTIONS))
+  .join(" ");

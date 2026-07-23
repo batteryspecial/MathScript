@@ -1,0 +1,12 @@
+.eqField {
+  flex: 1 1 auto;
+  font-family: var(--ms-font-mono);
+  font-size: 15px;
+  border: 1px solid var(--ms-accent);
+  border-radius: 2px;
+  background: #fff;
+  color: #1a1a6e;
+  padding: 5px 10px;
+  min-width: 0;
+  display: inline-block;
+}

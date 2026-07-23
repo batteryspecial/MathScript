@@ -12,7 +12,7 @@ const TABS: { id: SymbolCategory; label: string }[] = [
 
 interface SymbolPanelProps {
   canInsert: boolean;
-  onInsert: (glyph: string) => void;
+  onInsert: (latex: string) => void;
 }
 
 export default function SymbolPanel({ canInsert, onInsert }: SymbolPanelProps) {
@@ -61,7 +61,7 @@ export default function SymbolPanel({ canInsert, onInsert }: SymbolPanelProps) {
             className={styles.symBtn}
             disabled={!canInsert}
             title={s.key}
-            onClick={() => onInsert(s.unicode)}
+            onClick={() => onInsert(s.latex)}
           >
             {s.unicode}
           </button>
