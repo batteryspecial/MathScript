@@ -9,7 +9,8 @@ export interface Cell {
   id: string
   type: CellType
   initialContent: Descendant[] | null
-  equationContent?: string
+  equationContent?: string;
+  label?: string;
 }
 
 // A whole-cell clipboard/duplication snapshot — preserves type + equation
@@ -18,5 +19,6 @@ export interface Cell {
 export interface CellSnapshot {
   type: CellType
   initialContent: Descendant[] | null
-  equationContent?: string
+  equationContent?: string;
+  label?: string;
 }

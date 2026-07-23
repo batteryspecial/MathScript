@@ -71,6 +71,7 @@ const MATH_OPERANDS: Row[] = [
   ["bot", "⊥", "\\bot", "math"], ["aleph", "ℵ", "\\aleph", "math"],
   ["hbar", "ℏ", "\\hbar", "math"], ["ell", "ℓ", "\\ell", "math"],
   ["angle", "∠", "\\angle", "math"], ["checkmark", "✓", "\\checkmark", "math"],
+  ["sqrt", "√", "\\sqrt", "math"], ["frac", "⁄", "\\frac", "math"],
 ];
 
 // Math infix operators / relations (spaced).
@@ -82,7 +83,7 @@ const MATH_INFIX: Row[] = [
   ["subseteq", "⊆", "\\subseteq", "math", true],
   ["supseteq", "⊇", "\\supseteq", "math", true],
   ["cup", "∪", "\\cup", "math", true], ["cap", "∩", "\\cap", "math", true],
-  ["union", "∪", "\\cup", "math", true], ["inter", "∩", "\\cap", "math", true],
+  ["union", "∪", "\\cup", "math", true],
   ["setminus", "∖", "\\setminus", "math", true],
   ["times", "×", "\\times", "math", true], ["div", "÷", "\\div", "math", true],
   ["cdot", "⋅", "\\cdot", "math", true], ["pm", "±", "\\pm", "math", true],
@@ -144,47 +145,10 @@ export const SYMBOLS: SymbolDef[] = [
 }));
 
 /**
- * Literal operator lexemes (the punctuation the lexer emits as "op" tokens).
- * `spaced` controls whether the Unicode renderer pads it with spaces.
- */
-export interface OperatorDef {
-  lexeme: string;
-  unicode: string;
-  latex: string;
-  spaced: boolean;
-}
-
-// prettier-ignore
-const OPERATOR_ROWS: [string, string, string, boolean?][] = [
-  // multi-character first; the lexer matches longest-first
-  ["<=>", "⇔", "\\Leftrightarrow", true], ["<->", "↔", "\\leftrightarrow", true],
-  ["<=", "≤", "\\leq", true], [">=", "≥", "\\geq", true],
-  ["!=", "≠", "\\neq", true], ["/=", "≠", "\\neq", true],
-  ["==", "=", "=", true], ["~=", "≈", "\\approx", true],
-  ["~~", "≈", "\\approx", true], ["->", "→", "\\to", true],
-  ["=>", "⇒", "\\Rightarrow", true], ["<-", "←", "\\gets", true],
-  [":=", "≔", "\\coloneqq", true], ["+-", "±", "\\pm", true],
-  ["...", "…", "\\ldots", false], [">>", "≫", "\\gg", true],
-  ["<<", "≪", "\\ll", true],
-  // single-character
-  ["+", "+", "+", true], ["-", "−", "-", true], ["=", "=", "=", true],
-  ["<", "<", "<", true], [">", ">", ">", true], ["*", "⋅", "\\cdot", false],
-  ["/", "/", "/", false], ["|", "∣", "\\mid", true], ["!", "!", "!", false],
-  [".", ".", ".", false], [":", ":", ":", true], [";", ";", ";", false],
-  [",", ",", ",", false],
-];
-
-export const OPERATORS: OperatorDef[] = OPERATOR_ROWS.map(
-  ([lexeme, unicode, latex, spaced = true]) => ({ lexeme, unicode, latex, spaced }),
-);
-
-/** Operators that may appear in prefix position as a unary sign. */
-export const UNARY_OPERATORS = new Set(["-", "+"]);
-
-/**
  * Functions we know how to typeset. `\\sin`, `\\log`, ... get the upright
- * operator-name treatment in LaTeX. Unknown function names are wrapped in
- * \\mathrm{} so multi-letter names don't render as a product of italics.
+ * operator-name treatment. This list matches MathQuill's own default
+ * `autoOperatorNames`, so we never need to configure that ourselves — sin,
+ * cos, log, etc. already render upright out of the box.
  */
 export const KNOWN_FUNCTIONS: Record<string, string> = {
   sin: "\\sin", cos: "\\cos", tan: "\\tan", cot: "\\cot", sec: "\\sec",
@@ -195,67 +159,41 @@ export const KNOWN_FUNCTIONS: Record<string, string> = {
   dim: "\\dim", gcd: "\\gcd", arg: "\\arg", ker: "\\ker", deg: "\\deg",
 };
 
-/* --------------------------- Lookup maps --------------------------- */
-
-const symbolByKey = new Map<string, SymbolDef>();
-const symbolByGlyph = new Map<string, SymbolDef>();
-for (const def of SYMBOLS) {
-  if (!symbolByKey.has(def.key)) symbolByKey.set(def.key, def);
-  // first keyword wins as the canonical name for a glyph
-  if (!symbolByGlyph.has(def.unicode)) symbolByGlyph.set(def.unicode, def);
-}
-
-const operatorByLexeme = new Map<string, OperatorDef>();
-for (const op of OPERATORS) operatorByLexeme.set(op.lexeme, op);
-
-/** All operator lexemes, longest first — for greedy longest-match in the lexer. */
-export const OPERATOR_LEXEMES: string[] = OPERATORS.map((o) => o.lexeme).sort(
-  (a, b) => b.length - a.length,
-);
-
-/** Recognised glyphs, so the lexer can accept symbols pasted/inserted directly. */
-export const GLYPHS: ReadonlySet<string> = new Set(symbolByGlyph.keys());
-
-export interface Rendering {
-  unicode: string;
-  latex: string;
-  /** for operators: whether to pad with spaces in the Unicode renderer */
-  spaced: boolean;
-}
-
-/** Resolve an operand lexeme (identifier or glyph) to its renderings. */
-export function resolveOperand(lexeme: string): Rendering & { known: boolean } {
-  const def = symbolByKey.get(lexeme) ?? symbolByGlyph.get(lexeme);
-  if (def) return { unicode: def.unicode, latex: def.latex, spaced: false, known: true };
-  return { unicode: lexeme, latex: "", spaced: false, known: false };
-}
-
-/** Resolve an operator/relation lexeme to its renderings. */
-export function resolveOperator(lexeme: string): Rendering & { known: boolean } {
-  const op = operatorByLexeme.get(lexeme);
-  if (op) return { unicode: op.unicode, latex: op.latex, spaced: op.spaced, known: true };
-  const sym = symbolByKey.get(lexeme) ?? symbolByGlyph.get(lexeme);
-  if (sym) return { unicode: sym.unicode, latex: sym.latex, spaced: true, known: true };
-  return { unicode: lexeme, latex: "", spaced: true, known: false };
-}
-
-/** Is this lexeme an infix operator/relation (used by the parser to classify)? */
-export function isInfixLexeme(lexeme: string): boolean {
-  if (operatorByLexeme.has(lexeme)) return true;
-  const sym = symbolByKey.get(lexeme) ?? symbolByGlyph.get(lexeme);
-  return sym?.infix ?? false;
-}
+/**
+ * Words that aren't safe to hand to MathQuill's `autoCommands`, even though
+ * they pass its own config-time check (letters, length >= 2, not already an
+ * operator name). Verified against the actual command table bundled in
+ * `node_modules/react-mathquill` (495 registered names) rather than assumed:
+ *
+ * - RR/NN/ZZ/QQ/CC/PP/HH and a few aliases (lnot, checkmark,
+ *   circlearrowleft/right) aren't real MathQuill commands at all — typing
+ *   them threw `LatexCmds[str] is not a function`. Blackboard-bold letters
+ *   still work fine via the SymbolPanel, which inserts LaTeX directly
+ *   instead of going through this bareword lookup.
+ * - Everything under 3 letters is excluded on top of that. MathQuill
+ *   matches the longest recognised *suffix* of the letters typed so far on
+ *   every keystroke, not a whole word from a real boundary — so 2-letter
+ *   entries fire mid-word inside unrelated longer ones ("forall" fired
+ *   "or" from "f-o-r", then "ll" from "a-l-l", before the full word was
+ *   ever seen). Short Greek letters (pi, mu, nu, xi) and short operators
+ *   (in, to, or, le, ge, ...) are still reachable by typing them with a
+ *   leading backslash, or via the SymbolPanel.
+ */
+const NOT_REGISTERED_IN_MATHQUILL = new Set([
+  "RR", "NN", "ZZ", "QQ", "CC", "PP", "HH",
+  "lnot", "checkmark", "circlearrowleft", "circlearrowright",
+]);
 
 /**
- * Space-delimited command list for MathQuill's `autoCommands` config: typing
- * one of these words (no backslash) auto-converts it to the symbol as you
- * type, e.g. "forall" -> ∀.
- *
- * MathQuill requires every entry be letters-only, length >= 2, and *not*
- * already one of its built-in operator names (sin, log, deg, inf, ...) —
- * passing one of those throws at field-mount time. KNOWN_FUNCTIONS is
- * MathQuill's operator-name set, so anything overlapping it is excluded.
+ * Space-delimited list for MathQuill's `autoCommands` config: typing one of
+ * these words (no backslash) converts it to the symbol as you type, e.g.
+ * "forall" -> ∀. This is MathQuill's own built-in mechanism — nothing here
+ * intercepts keystrokes or mutates the field ourselves.
  */
 export const AUTO_COMMANDS: string = [...new Set(SYMBOLS.map((s) => s.key))]
-  .filter((key) => key.length >= 2 && !(key in KNOWN_FUNCTIONS))
+  .filter(
+    (key) =>
+      key.length >= 3 && !(key in KNOWN_FUNCTIONS) && !NOT_REGISTERED_IN_MATHQUILL.has(key),
+  )
   .join(" ");
+

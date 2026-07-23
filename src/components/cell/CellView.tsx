@@ -39,12 +39,14 @@ const VARIANT: Record<"text" | "section" | "subsection", EditorVariant> = {
 interface CellViewProps {
   id: string;
   type: CellType;
-  className?: string
+  label?: string;
+  className?: string;
   initialContent: Descendant[] | null;
   equationContent?: string;
   autoFocus: boolean;
   isOpSelected: boolean;
   onSelect: () => void;
+  onLabelChange: (id: string, value: string) => void;
   onEnterCellOpMode: (e: React.MouseEvent) => void;
   registerEditor: (id: string, editor: CustomEditor) => () => void;
   onMoveUp: () => void;
@@ -54,20 +56,22 @@ interface CellViewProps {
 }
 
 export default function CellView({
-  id,
-  type,
-  className,
-  initialContent,
-  equationContent,
-  autoFocus,
-  isOpSelected,
-  onSelect,
-  onEnterCellOpMode,
-  registerEditor,
-  onMoveUp,
-  onMoveDown,
-  onDuplicate,
-  onDelete,
+    id,
+    type,
+    label,
+    className,
+    initialContent,
+    equationContent,
+    autoFocus,
+    isOpSelected,
+    onSelect,
+    onLabelChange,
+    onEnterCellOpMode,
+    registerEditor,
+    onMoveUp,
+    onMoveDown,
+    onDuplicate,
+    onDelete,
 }: CellViewProps) {
   const selected: boolean = autoFocus || isOpSelected;
   const styleName: string = [className, styles.cell, TYPE_CLASS[type], selected && styles.selected].filter(Boolean).join(" ")
@@ -86,17 +90,26 @@ export default function CellView({
 
       <div className={styles.content}>
         {type === "equation" ? (
-          <EquationDisplay src={equationContent ?? ""} />
+            <div className="flex items-center gap-2">
+                <EquationDisplay src={equationContent ?? ""} />
+                <input
+                    className="flex-none [field-sizing:content] min-w-[20px] max-w-[160px] [font-family:var(--ms-font-mono)] text-xs text-[var(--ms-muted)] bg-[#f0f0f0] border border-[var(--ms-border)] rounded-[2px] py-0.5 px-1.5 text-right focus:outline-none focus:border-[var(--ms-accent)] focus:text-[var(--ms-text)]"
+                    value={label ?? ""}
+                    placeholder="(n)"
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => onLabelChange(id, e.target.value)}
+                />
+            </div>
         ) : (
-          <Editor
-            id={id}
-            variant={VARIANT[type]}
-            autoFocus={autoFocus}
-            initialContent={initialContent}
-            onFocus={onSelect}
-            registerEditor={registerEditor}
-            className="p-1"
-          />
+            <Editor
+                id={id}
+                variant={VARIANT[type]}
+                autoFocus={autoFocus}
+                initialContent={initialContent}
+                onFocus={onSelect}
+                registerEditor={registerEditor}
+                className="p-1"
+            />
         )}
       </div>
 
@@ -111,24 +124,29 @@ export default function CellView({
 }
 
 function EquationDisplay({ src }: { src: string }) {
-  const html = useMemo(() => {
-    if (!src.trim()) return null;
-    try {
-      return katex.renderToString(src, { throwOnError: false, displayMode: true });
-    } catch {
-      return null;
-    }
-  }, [src]);
+    const html = useMemo(() => {
+        if (!src.trim()) return null;
+        try {
+            return katex.renderToString(src, { throwOnError: false, displayMode: true });
+        } catch {
+            return null;
+        }
+    }, [src]);
 
-  if (html) return <div className={styles.equation} dangerouslySetInnerHTML={{ __html: html }} />;
+    if (html) return (
+        <div
+            className="flex-1 min-w-0 [font-family:var(--ms-font-mono)] text-[18px] text-center text-[#1a1a6e] py-1 break-words"
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
 
-  return (
-    <div className={styles.equation}>
-      {src.trim() ? (
-        <span className={styles.equationPlaceholder}>{src}</span>
-      ) : (
-        <span className={styles.equationPlaceholder}>empty equation — edit below</span>
-      )}
-    </div>
-  );
+    return (
+        <div className="flex-1 min-w-0 [font-family:var(--ms-font-mono)] text-[18px] text-center text-[#1a1a6e] py-1 break-words">
+            {src.trim() ? (
+                <span className="[font-family:var(--ms-font-ui)] text-xs italic text-[var(--ms-muted)]">{src}</span>
+            ) : (
+                <span className="[font-family:var(--ms-font-ui)] text-xs italic text-[var(--ms-muted)]">empty equation — edit below</span>
+            )}
+        </div>
+    );
 }

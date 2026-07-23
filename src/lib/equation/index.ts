@@ -1,8 +1,7 @@
 /**
- * Equation symbol table — shared between the MathQuill editing field
- * (autoCommands) and the SymbolPanel (click-to-insert).
+ * Equation symbol table — feeds the SymbolPanel's click-to-insert buttons.
  *
- * MathQuill owns parsing/rendering/LaTeX serialization now; this module no
+ * MathQuill owns parsing/rendering/LaTeX serialization; this module no
  * longer contains a parser.
  */
 export {

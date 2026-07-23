@@ -14,11 +14,9 @@ type CellOperationMode = 'cellWrite' | 'cellOperation' | null
 
 /**
  * useCells - per-notebook cell state + selection
- *
  * - State (cells, selection) stays local to each Notebook instance
- * -  Logic itself lives in pure helpers (lib/cells/operations.ts)
+ * - Logic itself lives in pure helpers (lib/cells/operations.ts)
  * - The clipboard ref is owned by AppShell and injected
- *
  * - All cell operations are mode-agnostic
  * - The multi-select set when one exists
  * - Same functions back both the keyboard handlers and the operation bar.
@@ -181,6 +179,7 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
             type: cell.type,
             equationContent: cell.equationContent,
             initialContent: cell.type === 'equation' ? null : getEditorContent(cell.id),
+            label: cell.label,
         }))
     ), [cells, getEditorContent])
 
@@ -271,6 +270,14 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
         setCells(prev => prev.map(c => (c.id === id ? { ...c, equationContent: latex } : c)))
     }, [])
 
+    const setEquationCellLabel = useCallback((id: string, label: string): void => {
+        setCells(prev => prev.map(
+            c => (
+                c.id === id && c.type === "equation" ? { ...c, label } : c
+            )
+        ))
+    }, [])
+
     const setCellType = useCallback((id: string, type: CellType): void => {
         setCells(prev => prev.map(c => (
             c.id === id
@@ -279,7 +286,6 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
         )))
     }, [])
 
-
     return {
         cells, cellOpMode, setCellOpMode,
         registerEditor, getEditorContent, isEditorEmpty,
@@ -287,6 +293,6 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
         enterCellOperationMode, exitCellOperationMode,
         navigateCell, cellMultiArrowSelect, onShiftRelease, cellMultiClickSelect,
         addCell, copyCells, cutCells, pasteCells, deleteCells, duplicateCells, swapCells,
-        addCellWithType, setCellEquationContent, setCellType,
+        addCellWithType, setCellEquationContent, setCellType, setEquationCellLabel,
     }
 }

@@ -85,8 +85,9 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
             c.cells.map((cell) => ({ 
                 id: cell.id, 
                 type: cell.type, 
-                equationContent: cell.equationContent }
-            )),
+                equationContent: cell.equationContent,
+                label: cell.label
+            })),
             (id) => slateToLatex(c.getEditorContent(id)),
         ),
         [c.cells, c.getEditorContent],
@@ -145,6 +146,7 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
                     id={cell.id}
                     key={cell.id}
                     type={cell.type}
+                    label={cell.label}
                     registerEditor={register}
                     initialContent={cell.initialContent}
                     equationContent={cell.equationContent}
@@ -157,6 +159,7 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
                     onEnterCellOpMode={(e) =>
                         ClickHandler(e, cell.id, c.cellMultiClickSelect, c.enterCellOperationMode)
                     }
+                    onLabelChange={c.setEquationCellLabel}
                     onMoveUp={() => c.swapCells(cell.id, "up")}
                     onMoveDown={() => c.swapCells(cell.id, "down")}
                     onDelete={() => c.deleteCells(new Set([cell.id]))}
