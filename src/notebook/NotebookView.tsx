@@ -12,6 +12,7 @@ import { ClickHandler } from "@/lib/keybinds/ClickHandler"
 import { isMarkActive, toggleMark, type Mark } from "@/lib/slate/marks"
 import { slateToLatex } from "@/lib/slate/serialize"
 import { buildLatex } from "@/lib/latex/export"
+import { computeHeadingNumbers } from "@/lib/cells/numbering"
 import type { CustomEditor } from "@/lib/slate/types"
 import type { CellSnapshot } from "@/lib/cells/types"
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI"
@@ -96,6 +97,8 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
         [c.cells, c.getEditorContent, meta],
     )
 
+    const headingNumbers = useMemo(() => computeHeadingNumbers(c.cells), [c.cells])
+
     const selectedCell = useMemo(() => {
         const cell = c.cells.find((x) => x.id === c.selectedId)
         return cell 
@@ -154,6 +157,7 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
                     key={cell.id}
                     type={cell.type}
                     label={cell.label}
+                    headingNumber={headingNumbers.get(cell.id)}
                     registerEditor={register}
                     initialContent={cell.initialContent}
                     equationContent={cell.equationContent}
