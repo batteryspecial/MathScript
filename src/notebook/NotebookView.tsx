@@ -5,6 +5,7 @@ import { HistoryEditor } from "slate-history"
 
 import { useCells, type CellType } from "@/hooks/cells/useCells"
 import { useCellOperations } from "@/hooks/cells/useCellOperations"
+import { useDocumentMeta } from "@/hooks/document/useDocumentMeta"
 
 import CellView from "@/components/cell/CellView"
 import { ClickHandler } from "@/lib/keybinds/ClickHandler"
@@ -24,6 +25,7 @@ interface NotebookViewProps {
 
 export default function NotebookView({ fileId, isActive, clipboard, onAPI }: NotebookViewProps) {
     const c = useCells(clipboard)
+    const { meta, updateMeta } = useDocumentMeta(fileId)
 
     // Inactive documents pass mode=null so their document keydown listener detaches.
     useCellOperations({
@@ -82,15 +84,16 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
 
     const exportLatex = useCallback(() =>
         buildLatex(
-            c.cells.map((cell) => ({ 
-                id: cell.id, 
-                type: cell.type, 
+            c.cells.map((cell) => ({
+                id: cell.id,
+                type: cell.type,
                 equationContent: cell.equationContent,
                 label: cell.label
             })),
             (id) => slateToLatex(c.getEditorContent(id)),
+            meta,
         ),
-        [c.cells, c.getEditorContent],
+        [c.cells, c.getEditorContent, meta],
     )
 
     const selectedCell = useMemo(() => {
@@ -109,6 +112,8 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
         isFormatActive,
         insertCell,
         setEquationContent: c.setCellEquationContent,
+        documentMeta: meta,
+        updateDocumentMeta: updateMeta,
         exportLatex,
         undo,
         redo,
@@ -125,6 +130,8 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
         isFormatActive,
         insertCell,
         c.setCellEquationContent,
+        meta,
+        updateMeta,
         exportLatex,
         undo,
         redo,

@@ -1,5 +1,6 @@
 import type { CellType } from "@/hooks/cells/useCells";
 import type { Mark } from "@/lib/slate/marks";
+import type { DocumentMeta } from "@/lib/latex/meta";
 
 export interface SelectedCellInfo {
   id: string;
@@ -17,6 +18,8 @@ export interface NotebookAPI {
   isFormatActive: (mark: Mark) => boolean;
   insertCell: (type: CellType) => void;
   setEquationContent: (id: string, src: string) => void;
+  documentMeta: DocumentMeta;
+  updateDocumentMeta: (patch: Partial<DocumentMeta>) => void;
   exportLatex: () => string;
   undo: () => void;
   redo: () => void;

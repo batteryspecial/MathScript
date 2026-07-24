@@ -18,6 +18,8 @@ import CellOperationsBar from "@/components/tools/CellOperationsBar"
 
 import SymbolPanel from "@/components/math/equation/SymbolPanel"
 import EquationEditor from "@/components/math/equation/EquationEditor"
+import RenameDialog from "@/components/dialogs/RenameDialog"
+import ExportDialog from "@/components/dialogs/ExportDialog"
 
 export default function AppShell({ id }: { id: string}) {
     const ws = useWorkspace()
@@ -26,6 +28,8 @@ export default function AppShell({ id }: { id: string}) {
     const [symbolsOpen, setSymbolsOpen] = useState(false)
     const [explorerOpen, setExplorerOpen] = useState(true)
     const [activeAPI, setActiveAPI] = useState<NotebookAPI | null>(null)
+    const [renameOpen, setRenameOpen] = useState(false)
+    const [exportOpen, setExportOpen] = useState(false)
 
     // one clipboard shared by every open notebook
     const clipboard = useRef<CellSnapshot[] | null>(null)
@@ -56,11 +60,12 @@ export default function AppShell({ id }: { id: string}) {
                 <FileBar
                     ws={ws}
                     api={liveAPI}
-                    fileName={ws.fileName(ws.activeFileId)}
                     explorerOpen={explorerOpen}
                     onToggleExplorer={() => setExplorerOpen((v) => !v)}
                     symbolsOpen={symbolsOpen}
                     onToggleSymbols={() => setSymbolsOpen((v) => !v)}
+                    onOpenRename={() => setRenameOpen(true)}
+                    onOpenExport={() => setExportOpen(true)}
                 />
                 <TabBar ws={ws} />
                 <CellOperationsBar api={liveAPI} />
@@ -108,6 +113,24 @@ export default function AppShell({ id }: { id: string}) {
                         fieldRef={eqBar.fieldRef}
                         value={selectedEq.equationContent}
                         onChange={(v) => liveAPI.setEquationContent(selectedEq.id, v)}
+                    />
+                )}
+
+                {liveAPI && (
+                    <RenameDialog
+                        open={renameOpen}
+                        onOpenChange={setRenameOpen}
+                        title={liveAPI.documentMeta.title}
+                        onCommit={(t) => liveAPI.updateDocumentMeta({ title: t })}
+                    />
+                )}
+
+                {liveAPI && (
+                    <ExportDialog
+                        open={exportOpen}
+                        onOpenChange={setExportOpen}
+                        api={liveAPI}
+                        fileName={ws.fileName(ws.activeFileId)}
                     />
                 )}
             </div>

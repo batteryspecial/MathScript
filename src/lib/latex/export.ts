@@ -1,3 +1,6 @@
+import { escapeLatexText } from "@/lib/latex/escape";
+import type { DocumentMeta } from "@/lib/latex/meta";
+
 export type ExportCellType = "text" | "section" | "subsection" | "equation";
 
 export interface ExportCell {
@@ -7,23 +10,36 @@ equationContent?: string;
 label?: string;
 }
 
-/**
- * Assemble a compilable LaTeX document from the notebook cells.
- *
- * `getText(id)` must return LaTeX-ready inline content for prose cells
- * (already escaped, marks already applied). Equation cells already hold
- * real LaTeX in `equationContent` — MathQuill serializes it as you type.
- */
-export function buildLatex(cells: ExportCell[], getText: (id: string) => string): string {
+// getText(id) must return LaTeX-ready inline content (already escaped, marks applied).
+export function buildLatex(cells: ExportCell[], getText: (id: string) => string, meta: DocumentMeta): string {
 	const lines: string[] = [
 		"\\documentclass{article}",
 		"\\usepackage[T1]{fontenc}",
 		"\\usepackage{amsmath}",
 		"\\usepackage{amssymb}",
-		"",
-		"\\begin{document}",
-		"",
 	];
+
+	if (meta.metaOn) {
+		lines.push("\\usepackage{hyperref}");
+		const setup: string[] = [];
+		if (meta.titleOn) setup.push(`pdftitle={${escapeLatexText(meta.title)}}`);
+		if (meta.authorOn) setup.push(`pdfauthor={${escapeLatexText(meta.author)}}`);
+		if (meta.colorLinksOn) setup.push("colorlinks=true", "linkcolor=blue", "citecolor=blue", "urlcolor=blue");
+		if (setup.length) lines.push(`\\hypersetup{${setup.join(", ")}}`);
+	}
+
+	// \maketitle only if at least one of title/author/date is on.
+	const showTitleBlock = meta.titleOn || meta.authorOn || meta.dateOn;
+	if (meta.titleOn) lines.push(`\\title{${escapeLatexText(meta.title)}}`);
+	if (meta.authorOn) lines.push(`\\author{${escapeLatexText(meta.author)}}`);
+	if (showTitleBlock) {
+		// LaTeX defaults to \today when \date is never called — empty braces
+		// are required to actually suppress it, omitting the line isn't enough.
+		lines.push(meta.dateOn ? `\\date{${escapeLatexText(meta.date)}}` : "\\date{}");
+	}
+
+	lines.push("", "\\begin{document}", "");
+	if (showTitleBlock) lines.push("\\maketitle", "");
 
 	for (const cell of cells) {
 		switch (cell.type) {

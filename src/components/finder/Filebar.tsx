@@ -2,7 +2,6 @@
 import { useState } from "react";
 import type { Workspace } from "@/hooks/workspace/useWorkspace";
 import type { NotebookAPI } from "@/lib/notebook/NotebookAPI";
-import { downloadLatex } from "@/lib/latex/export";
 
 type MenuKey = "File" | "Edit" | "View" | "Help";
 const MENUS: MenuKey[] = ["File", "Edit", "View", "Help"];
@@ -16,11 +15,12 @@ interface MenuItem {
 interface FileBarProps {
   ws: Workspace;
   api: NotebookAPI | null;
-  fileName: string;
   explorerOpen: boolean;
   onToggleExplorer: () => void;
   symbolsOpen: boolean;
   onToggleSymbols: () => void;
+  onOpenRename: () => void;
+  onOpenExport: () => void;
 }
 
 function Divider() {
@@ -52,11 +52,12 @@ function Dropdown({ items }: { items: (MenuItem | "divider")[] }) {
 export default function FileBar({
   ws,
   api,
-  fileName,
   explorerOpen,
   onToggleExplorer,
   symbolsOpen,
   onToggleSymbols,
+  onOpenRename,
+  onOpenExport,
 }: FileBarProps) {
   const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
   const close = () => setOpenMenu(null);
@@ -66,11 +67,9 @@ export default function FileBar({
       { label: "New File", onClick: () => { ws.createFile(); close(); } },
       { label: "New Folder", onClick: () => { ws.createFolder(); close(); } },
       "divider",
-      {
-        label: "Export LaTeX",
-        disabled: !api,
-        onClick: () => { if (api) downloadLatex(api.exportLatex(), fileName || "document"); close(); },
-      },
+      { label: "Rename", disabled: !api, onClick: () => { onOpenRename(); close(); } },
+      "divider",
+      { label: "Export LaTeX", disabled: !api, onClick: () => { onOpenExport(); close(); } },
     ],
     Edit: [
       { label: "Undo", disabled: !api, onClick: () => { api?.undo(); close(); } },
