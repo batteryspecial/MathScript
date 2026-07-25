@@ -1,0 +1,28 @@
+{
+    "name": "@mathscript/postgres",
+    "version": "0.0.0",
+    "private": true,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "prisma generate && tsc",
+        "db:migrate": "prisma migrate dev",
+        "db:deploy": "prisma migrate deploy",
+        "db:studio": "prisma studio",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@prisma/client": "^6.19.1"
+    },
+    "devDependencies": {
+        "dotenv": "^17.2.4",
+        "prisma": "^6.19.1",
+        "typescript": "5.9.3"
+    }
+}

@@ -1,9 +1,11 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { useWorkspace } from "@/hooks/workspace/useWorkspace"
 import { useEquationBar } from "@/hooks/equation/useEquationBar"
 import { buildKey } from "@/lib/keybinds/KeyHandler"
+import type { SaveState } from "@/hooks/document/useAutosave"
+import type { InitialWorkspace } from "@/lib/db/hydrate"
 
 import NotebookView from "@/notebook/NotebookView"
 import type { CellSnapshot } from "@/lib/cells/types"
@@ -21,8 +23,8 @@ import EquationEditor from "@/components/math/equation/EquationEditor"
 import RenameDialog from "@/components/dialogs/RenameDialog"
 import ExportDialog from "@/components/dialogs/ExportDialog"
 
-export default function AppShell({ id }: { id: string}) {
-    const ws = useWorkspace()
+export default function AppShell({ initial }: { initial: InitialWorkspace }) {
+    const ws = useWorkspace(initial)
     const eqBar = useEquationBar()
 
     const [symbolsOpen, setSymbolsOpen] = useState(false)
@@ -31,8 +33,20 @@ export default function AppShell({ id }: { id: string}) {
     const [renameOpen, setRenameOpen] = useState(false)
     const [exportOpen, setExportOpen] = useState(false)
 
+    // Every open notebook reports in, not just the active one, so the tab dot
+    // survives switching away mid-save.
+    const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({})
+    const onSaveState = useCallback((fileId: string, state: SaveState) => {
+        setSaveStates((prev) => (prev[fileId] === state ? prev : { ...prev, [fileId]: state }))
+    }, [])
+
     // one clipboard shared by every open notebook
     const clipboard = useRef<CellSnapshot[] | null>(null)
+
+    // Closing a tab unmounts its notebook. Without this, reopening would re-seed
+    // from the load-time server snapshot and autosave stale content back over
+    // the edits. Each notebook refreshes its entry as it unmounts.
+    const docCache = useRef({ ...initial.documents })
 
     // only trust the published API if it belongs to the currently active file
     // (activeAPI may be stale if we switch files quickly)
@@ -67,7 +81,7 @@ export default function AppShell({ id }: { id: string}) {
                     onOpenRename={() => setRenameOpen(true)}
                     onOpenExport={() => setExportOpen(true)}
                 />
-                <TabBar ws={ws} />
+                <TabBar ws={ws} saveStates={saveStates} />
                 <CellOperationsBar api={liveAPI} />
                 <ToolBar
                     api={liveAPI}
@@ -99,7 +113,9 @@ export default function AppShell({ id }: { id: string}) {
                             >
                                 <NotebookView
                                     fileId={tab.id}
+                                    docCache={docCache}
                                     onAPI={setActiveAPI}
+                                    onSaveState={onSaveState}
                                     clipboard={clipboard}
                                     isActive={tab.id === ws.activeFileId}
                                 />

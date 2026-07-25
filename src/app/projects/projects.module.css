@@ -1,0 +1,152 @@
+/* Project index + the not-found screen. Chrome (nav, buttons, footer) is
+   reused from landing.module.css — same flat, borderless-radius idiom. */
+
+.head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    padding: 2.5rem 0 1.25rem;
+}
+
+.title {
+    margin: 0;
+    font-family: var(--ms-font-body);
+    font-size: 1.75rem;
+    font-weight: 400;
+    color: var(--ms-sb-bright);
+}
+
+.count {
+    font-size: 0.8125rem;
+    color: var(--ms-muted);
+}
+
+.headAction {
+    margin-left: auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: 1rem;
+    padding-bottom: 3rem;
+}
+
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-height: 7rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--ms-border);
+    background: var(--ms-body);
+    text-decoration: none;
+    color: inherit;
+}
+
+.card:hover {
+    border-color: var(--ms-accent);
+    background: var(--ms-sec-bg);
+}
+
+.cardName {
+    font-family: var(--ms-font-body);
+    font-size: 1rem;
+    color: var(--ms-sb-bright);
+    overflow-wrap: anywhere;
+}
+
+.card:hover .cardName {
+    color: var(--ms-accent);
+}
+
+/* Stretch the name link over the whole card so the card is one click target.
+   The delete button lifts above it rather than nesting inside the anchor. */
+.cardName::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.cardMeta {
+    margin-top: auto;
+    font-size: 0.75rem;
+    color: var(--ms-muted);
+}
+
+.cardId {
+    font-family: var(--ms-font-mono);
+    font-size: 0.6875rem;
+    color: var(--ms-tab-border);
+}
+
+.empty {
+    grid-column: 1 / -1;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--ms-tb-border);
+    background: var(--ms-sec-bg);
+    text-align: center;
+    color: var(--ms-muted);
+    font-size: 0.875rem;
+}
+
+/* --------------------------------------------------------- not found */
+
+.notFound {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 2rem 1.5rem;
+}
+
+.notFoundInner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.notFoundCode {
+    padding-right: 1.5rem;
+    border-right: 1px solid var(--ms-border);
+    font-family: var(--ms-font-body);
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--ms-sb-bright);
+}
+
+.notFoundBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.notFoundText {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--ms-sb-text);
+}
+
+.notFoundHint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--ms-muted);
+}
+
+@media (max-width: 480px) {
+    .notFoundInner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .notFoundCode {
+        padding: 0 0 0.75rem;
+        border-right: 0;
+        border-bottom: 1px solid var(--ms-border);
+    }
+}

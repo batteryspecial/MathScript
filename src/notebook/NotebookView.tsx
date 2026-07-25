@@ -1,11 +1,15 @@
 "use client"
 import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react"
+
 import { ReactEditor } from "slate-react"
 import { HistoryEditor } from "slate-history"
 
 import { useCells, type CellType } from "@/hooks/cells/useCells"
 import { useCellOperations } from "@/hooks/cells/useCellOperations"
 import { useDocumentMeta } from "@/hooks/document/useDocumentMeta"
+import { useAutosave, type SaveState } from "@/hooks/document/useAutosave"
+import { saveDocumentAction } from "@/lib/db/actions"
+import type { InitialDocument } from "@/lib/db/hydrate"
 
 import CellView from "@/components/cell/CellView"
 import { ClickHandler } from "@/lib/keybinds/ClickHandler"
@@ -21,12 +25,63 @@ interface NotebookViewProps {
     fileId: string
     isActive: boolean
     clipboard: RefObject<CellSnapshot[] | null>
+    docCache: RefObject<Record<string, InitialDocument>>
     onAPI: (api: NotebookAPI) => void
+    onSaveState: (fileId: string, state: SaveState) => void
 }
 
-export default function NotebookView({ fileId, isActive, clipboard, onAPI }: NotebookViewProps) {
-    const c = useCells(clipboard)
-    const { meta, updateMeta } = useDocumentMeta(fileId)
+export default function NotebookView({
+    fileId,
+    isActive,
+    clipboard,
+    docCache,
+    onAPI,
+    onSaveState,
+}: NotebookViewProps) {
+    // Only read at mount — the useState initializers below run once.
+    const initialDoc = docCache.current[fileId]
+
+    const c = useCells(clipboard, initialDoc?.cells)
+    const { meta, updateMeta } = useDocumentMeta(initialDoc?.meta)
+
+    const { state: saveState, markDirty } = useAutosave(
+        () => ({ meta, cells: c.serializeCells() }),
+        (payload) => saveDocumentAction(fileId, payload.meta, payload.cells),
+    )
+
+    // Structural edits (add/delete/move/retype/label/equation) change `cells`;
+    // prose does not — Slate owns that, so Editor calls markDirty directly.
+    const structure = c.cells
+        .map((cell) => `${cell.id}:${cell.type}:${cell.label ?? ""}:${cell.equationContent ?? ""}`)
+        .join("|")
+
+    const clean = useRef(true)
+    useEffect(() => {
+        if (clean.current) {
+            clean.current = false
+            return
+        }
+        markDirty()
+    }, [structure, meta, markDirty])
+
+    useEffect(() => {
+        onSaveState(fileId, saveState)
+    }, [fileId, saveState, onSaveState])
+
+    // Hand the live document back to AppShell on unmount, so closing and
+    // reopening the tab resumes where it left off rather than at load time.
+    const snapshotDoc = useRef<() => InitialDocument>(null!)
+    snapshotDoc.current = () => ({
+        meta,
+        cells: c.cells.map((cell) => ({
+            ...cell,
+            initialContent: cell.type === "equation" ? null : c.getEditorContent(cell.id),
+        })),
+    })
+
+    useEffect(() => () => {
+        docCache.current[fileId] = snapshotDoc.current()
+    }, [fileId, docCache])
 
     // Inactive documents pass mode=null so their document keydown listener detaches.
     useCellOperations({
@@ -161,6 +216,7 @@ export default function NotebookView({ fileId, isActive, clipboard, onAPI }: Not
                     registerEditor={register}
                     initialContent={cell.initialContent}
                     equationContent={cell.equationContent}
+                    onDirty={markDirty}
                     isOpSelected={c.selectedCellIds.has(cell.id)}
                     autoFocus={c.selectedId === cell.id && c.cellOpMode !== "cellOperation"}
                     onSelect={() => {

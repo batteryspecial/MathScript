@@ -35,6 +35,8 @@ interface EditorProps {
 	autoFocus?: boolean
 	initialContent: Descendant[] | null;
 	onFocus: () => void;
+	/** Fired on real document edits — selection moves don't count. */
+	onDirty?: () => void;
 	registerEditor: (id: string, editor: CustomEditor) => () => void;
 }
 
@@ -105,6 +107,7 @@ export default function Editor({
 	autoFocus,
 	initialContent,
 	onFocus,
+	onDirty,
 	registerEditor
 }: EditorProps) {
 	const editor = useMemo(() => withHistory(
@@ -145,6 +148,11 @@ export default function Editor({
 
 	const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, []);
 
+	// Slate fires onChange for caret movement too; only content edits are saves.
+	const onChange = useCallback(() => {
+		if (editor.operations.some((op) => op.type !== "set_selection")) onDirty?.();
+	}, [editor, onDirty]);
+
 	const onKeyDown = useCallback((e: React.KeyboardEvent) => {
 		if (!(e.metaKey || e.ctrlKey)) return;
 		const k = e.key.toLowerCase();
@@ -171,7 +179,7 @@ export default function Editor({
 				setEditing(false);
 			}}
 		>
-			<Slate key={HMR_ID} editor={editor} initialValue={initialValue}>
+			<Slate key={HMR_ID} editor={editor} initialValue={initialValue} onChange={onChange}>
 				<Editable
 					className={`${EDITABLE_BASE} ${VARIANT_CLASS[variant]} ${className ?? ""}`}
 					renderLeaf={renderLeaf}

@@ -1,42 +1,27 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { TreeNodeInput } from "@mathscript/postgres"
+
 import type { FileNode, NodeId, TreeNode, VisibleRow } from "@/lib/workspace/types"
 import { descendantIds, flattenVisible, newId, sanitizeName } from "@/lib/workspace/filetree"
+import { saveTreeAction } from "@/lib/db/actions"
+import { useAutosave } from "@/hooks/document/useAutosave"
+import type { InitialWorkspace } from "@/lib/db/hydrate"
 
-// The only place that knows where the workspace comes from
-// Future persistence goes here
-function createInitialWorkspace(): { nodes: TreeNode[]; activeFileId: NodeId | null } {
-    const main: FileNode = { id: newId(), kind: "file", name: "main.ms", parentId: null }
-    const intro: FileNode = { id: newId(), kind: "file", name: "intro.ms", parentId: null }
-    const chapters: TreeNode = {
-        id: newId(),
-        kind: "folder",
-        name: "chapters.ms",
-        parentId: null,
-        open: true,
-    }
+// Tree writes run ahead of document writes on purpose: Document.nodeId is a FK,
+// so a brand-new file's Node row has to land before its cells do.
+const TREE_SAVE_DELAY = 300
 
-    const derivation: FileNode = {
-        id: newId(),
-        kind: "file",
-        name: "derivation.ms",
-        parentId: chapters.id,
-    }
-
-    const proofs: FileNode = { 
-        id: newId(), 
-        kind: "file", 
-        name: "proofs.ms", 
-        parentId: chapters.id 
-    }
-
-    return {
-        nodes: [main, intro, chapters, derivation, proofs],
-        activeFileId: main.id,
-    }
+function toTreeInput(nodes: TreeNode[]): TreeNodeInput[] {
+    return nodes.map((n) => ({
+        id: n.id,
+        parentId: n.parentId,
+        kind: n.kind,
+        name: n.name,
+        open: n.kind === "folder" ? n.open : true,
+    }))
 }
-
 
 export interface Workspace {
     visible: VisibleRow[]
@@ -61,15 +46,31 @@ export interface Workspace {
     commitEdit: () => void
 }
 
-export function useWorkspace(): Workspace {
-    const [seed] = useState(createInitialWorkspace)
-    const [tree, setTree] = useState<TreeNode[]>(seed.nodes)
+export function useWorkspace(initial: InitialWorkspace): Workspace {
+    const [tree, setTree] = useState<TreeNode[]>(initial.nodes)
     const [openTabIds, setOpenTabIds] = useState<NodeId[]>(() =>
-        seed.activeFileId ? [seed.activeFileId] : [],
+        initial.activeFileId ? [initial.activeFileId] : [],
     )
-    const [activeFileId, setActiveFileId] = useState<NodeId | null>(seed.activeFileId)
+    const [activeFileId, setActiveFileId] = useState<NodeId | null>(initial.activeFileId)
     const [editingId, setEditingId] = useState<NodeId | null>(null)
     const [draft, setDraft] = useState<string>("")
+
+    const { markDirty } = useAutosave(
+        () => toTreeInput(tree),
+        (nodes) => saveTreeAction(initial.projectId, nodes),
+        TREE_SAVE_DELAY,
+    )
+
+    // setTree always produces a new array, so identity is the change signal.
+    // The mount pass is skipped — it matches what the server just sent.
+    const treeSaved = useRef(true)
+    useEffect(() => {
+        if (treeSaved.current) {
+            treeSaved.current = false
+            return
+        }
+        markDirty()
+    }, [tree, markDirty])
 
     // tracks a freshly created, still-unconfirmed file/folder so an escaped
     // rename (Escape before Enter) deletes it instead of leaving it orphaned

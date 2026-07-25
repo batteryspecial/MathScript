@@ -4,6 +4,7 @@ import { Lato, Geist } from "next/font/google";
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -29,7 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body className={lato.variable}>{children}</body>
+      <body className={lato.variable}>
+        {children}
+        {/* ActionButton reports failures through sonner — without this mount
+            a failed delete would look like nothing happened. */}
+        <Toaster position="bottom-right" />
+      </body>
     </html>
   );
 }

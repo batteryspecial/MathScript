@@ -1,0 +1,89 @@
+// MathScript persistence.
+//
+// The models mirror the in-memory types the app already uses, so the mapping
+// stays mechanical:
+//   Node     <- src/lib/workspace/types.ts  (TreeNode)
+//   Document <- src/lib/latex/meta.ts       (DocumentMeta)
+//   Cell     <- src/lib/cells/types.ts      (Cell)
+//
+// No auth yet — a Project is reachable by anyone holding its id.
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL") // Neon pooler — runtime queries
+    directUrl = env("DIRECT_URL") // Neon unpooled — migrations
+}
+
+enum NodeKind {
+    file
+    folder
+}
+
+enum CellType {
+    text
+    section
+    subsection
+    equation
+}
+
+model Project {
+    id        String   @id @default(uuid())
+    name      String   @default("Untitled project")
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    nodes     Node[]
+}
+
+/// One row per file or folder in the explorer tree.
+model Node {
+    id        String    @id // client-generated UUID (filetree.ts newId())
+    projectId String
+    parentId  String?
+    kind      NodeKind
+    name      String
+    open      Boolean   @default(true) // folders only
+    position  Int       @default(0) // sibling order
+    project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    parent    Node?     @relation("NodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
+    children  Node[]    @relation("NodeChildren")
+    document  Document?
+
+    @@index([projectId])
+    @@index([parentId])
+}
+
+/// The notebook behind a file node — carries the LaTeX document metadata.
+model Document {
+    id           String   @id @default(uuid())
+    nodeId       String   @unique
+    node         Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+    title        String   @default("Untitled")
+    titleOn      Boolean  @default(true)
+    author       String   @default("")
+    authorOn     Boolean  @default(true)
+    date         String   @default("")
+    dateOn       Boolean  @default(true)
+    metaOn       Boolean  @default(true)
+    colorLinksOn Boolean  @default(false)
+    updatedAt    DateTime @updatedAt
+    cells        Cell[]
+}
+
+model Cell {
+    id              String   @id // client-generated UUID
+    documentId      String
+    document        Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+    position        Int // replaces the Cell[] array index
+    type            CellType
+    content         Json? // Slate Descendant[]; null for equation cells
+    equationContent String?
+    label           String?
+
+    // Deliberately not @@unique — a bulk reorder writes overlapping positions
+    // inside one transaction before it settles.
+    @@index([documentId, position])
+}

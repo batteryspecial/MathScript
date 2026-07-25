@@ -49,6 +49,53 @@
   background: rgba(0, 0, 0, 0.08);
 }
 
+/* The dot and the × share one 14px box, so swapping between them on hover
+   never reflows the tab. Clean tabs show only the ×. */
+.tabDot,
+.tabX {
+  display: block;
+  width: 14px;
+  text-align: center;
+}
+
+.tabDot {
+  display: none;
+}
+
+.tabDot::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: middle;
+}
+
+.tabCloseDirty {
+  color: var(--ms-accent);
+}
+
+.tabCloseDirty .tabDot {
+  display: block;
+}
+
+.tabCloseDirty .tabX {
+  display: none;
+}
+
+.tabCloseDirty:hover {
+  color: #333;
+}
+
+.tabCloseDirty:hover .tabDot {
+  display: none;
+}
+
+.tabCloseDirty:hover .tabX {
+  display: block;
+}
+
 .newTab {
   display: flex;
   align-items: center;

@@ -55,6 +55,7 @@ interface CellViewProps {
 	autoFocus: boolean;
 	isOpSelected: boolean;
 	onSelect: () => void;
+	onDirty: () => void;
 	onLabelChange: (id: string, value: string) => void;
 	onEnterCellOpMode: (e: React.MouseEvent) => void;
 	registerEditor: (id: string, editor: CustomEditor) => () => void;
@@ -75,6 +76,7 @@ export default function CellView({
     autoFocus,
     isOpSelected,
     onSelect,
+    onDirty,
     onLabelChange,
     onEnterCellOpMode,
     registerEditor,
@@ -123,6 +125,7 @@ export default function CellView({
 							autoFocus={autoFocus}
 							initialContent={initialContent}
 							onFocus={onSelect}
+							onDirty={onDirty}
 							registerEditor={registerEditor}
 							className="flex-1 min-w-0 p-1"
 						/>

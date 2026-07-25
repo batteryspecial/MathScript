@@ -3,6 +3,7 @@ import { useRef, useState, useCallback, type RefObject } from 'react'
 import type { Editor } from 'slate'
 import { ReactEditor } from 'slate-react'
 
+import type { CellInput } from '@mathscript/postgres'
 import type { Cell, CellType, CellSnapshot } from '@/lib/cells/types'
 import {
     makeCell, snapshotToCell, insertAfter, replaceCell, removeByIds, moveCell, cellsInOrder,
@@ -21,12 +22,16 @@ type CellOperationMode = 'cellWrite' | 'cellOperation' | null
  * - The multi-select set when one exists
  * - Same functions back both the keyboard handlers and the operation bar.
  */
-export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
-    const [cells, setCells] = useState<Cell[]>(() => [{
-        id: crypto.randomUUID(),
-        initialContent: null,
-        type: 'text',
-    }])
+export function useCells(clipboard: RefObject<CellSnapshot[] | null>, initialCells?: Cell[]) {
+    // Loaded from the DB when the document has been saved before; a never-saved
+    // document opens on one blank text cell.
+    const [cells, setCells] = useState<Cell[]>(() => (
+        initialCells?.length ? initialCells : [{
+            id: crypto.randomUUID(),
+            initialContent: null,
+            type: 'text',
+        }]
+    ))
 
     const [anchorId, setAnchorId] = useState<string | null>(null)
     const [selectedId, setSelectedId] = useState<string>(cells[0].id)
@@ -35,6 +40,11 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
 
     const editorRefs = useRef<Record<string, Editor>>({})
     const extensionDirection = useRef<'up' | 'down' | null>(null)
+
+    // Lets the stable callbacks below read current cells without taking `cells`
+    // as a dependency (which would churn every consumer's memo).
+    const cellsRef = useRef(cells)
+    cellsRef.current = cells
 
     const selectCell = useCallback((id: string): void => setSelectedId(id), [])
 
@@ -151,7 +161,11 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
     const getEditorContent = useCallback((id: string) => {
         const editor = editorRefs.current[id]
         if (!editor) {
-            return [{ type: 'paragraph', children: [{ text: '' }] }] as Cell['initialContent']
+            // No live Slate instance — fall back to the content this cell was
+            // seeded with, never to blank. A save that runs while an editor is
+            // torn down must not wipe the cell.
+            return cellsRef.current.find(c => c.id === id)?.initialContent
+                ?? [{ type: 'paragraph', children: [{ text: '' }] }] as Cell['initialContent']
         }
         return JSON.parse(JSON.stringify(editor.children))
     }, [])
@@ -180,6 +194,18 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
             equationContent: cell.equationContent,
             initialContent: cell.type === 'equation' ? null : getEditorContent(cell.id),
             label: cell.label,
+        }))
+    ), [cells, getEditorContent])
+
+    // The persistence payload: same read as `snapshot`, but keyed by cell id and
+    // in document order, so rows can be upserted rather than recreated.
+    const serializeCells = useCallback((): CellInput[] => (
+        cells.map(cell => ({
+            id: cell.id,
+            type: cell.type,
+            content: cell.type === 'equation' ? null : getEditorContent(cell.id),
+            equationContent: cell.equationContent ?? null,
+            label: cell.label ?? null,
         }))
     ), [cells, getEditorContent])
 
@@ -288,7 +314,7 @@ export function useCells(clipboard: RefObject<CellSnapshot[] | null>) {
 
     return {
         cells, cellOpMode, setCellOpMode,
-        registerEditor, getEditorContent, isEditorEmpty,
+        registerEditor, getEditorContent, isEditorEmpty, serializeCells,
         selectCell, selectedId, selectedCellIds, selectAllCells,
         enterCellOperationMode, exitCellOperationMode,
         navigateCell, cellMultiArrowSelect, onShiftRelease, cellMultiClickSelect,
