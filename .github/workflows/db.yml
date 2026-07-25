@@ -1,0 +1,131 @@
+name: Database
+
+on:
+    push:
+        branches: ["**"]
+        paths:
+            - "packages/postgres/**"
+            - ".github/workflows/db.yml"
+    pull_request:
+        paths:
+            - "packages/postgres/**"
+            - ".github/workflows/db.yml"
+    workflow_dispatch:
+
+concurrency:
+    group: db-${{ github.ref }}
+    cancel-in-progress: true
+
+defaults:
+    run:
+        working-directory: packages/postgres
+
+jobs:
+    # Proves the migrations replay cleanly onto an empty database and that
+    # schema.prisma has not drifted away from them. Runs against a throwaway
+    # Postgres in the runner — never touches the real database.
+    schema:
+        name: Migrations and drift
+        runs-on: ubuntu-latest
+
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: mathscript_ci
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+        env:
+            DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mathscript_ci
+            DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mathscript_ci
+            SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mathscript_shadow
+
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              working-directory: .
+
+            - name: Schema is valid
+              run: pnpm exec prisma validate
+
+            - name: Migrations apply to an empty database
+              run: pnpm exec prisma migrate deploy
+
+            # `migrate diff` needs a scratch database to replay the migration
+            # history into before comparing it against schema.prisma.
+            - name: Create shadow database
+              run: |
+                  PGPASSWORD=postgres psql -h localhost -U postgres \
+                    -c 'CREATE DATABASE mathscript_shadow;'
+
+            # Exit code 2 means schema.prisma changed without a matching
+            # migration — the usual cause of "works locally, breaks on deploy".
+            - name: No drift between schema.prisma and migrations
+              run: |
+                  pnpm exec prisma migrate diff \
+                    --from-migrations ./src/prisma/migrations \
+                    --to-schema-datamodel ./src/prisma/schema.prisma \
+                    --shadow-database-url "$SHADOW_DATABASE_URL" \
+                    --exit-code
+
+            - name: Every table was created
+              run: |
+                  PGPASSWORD=postgres psql -h localhost -U postgres -d mathscript_ci \
+                    -c '\dt' | tee /dev/stderr | grep -q 'Project'
+                  PGPASSWORD=postgres psql -h localhost -U postgres -d mathscript_ci \
+                    -tAc "select count(*) from information_schema.tables
+                          where table_schema='public'
+                            and table_name in ('Project','Node','Document','Cell')" \
+                    | grep -qx 4
+
+    # Read-only reachability check against the real database. Skips itself
+    # cleanly when the secrets are not configured (forks, first-time setup).
+    connection:
+        name: Live database reachable
+        runs-on: ubuntu-latest
+
+        env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+            DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              working-directory: .
+
+            - name: Are the secrets configured?
+              id: guard
+              run: |
+                  if [ -z "$DATABASE_URL" ] || [ -z "$DIRECT_URL" ]; then
+                    echo "configured=false" >> "$GITHUB_OUTPUT"
+                    echo "::notice::DATABASE_URL / DIRECT_URL not set — skipping the live check."
+                  else
+                    echo "configured=true" >> "$GITHUB_OUTPUT"
+                  fi
+
+            # Read-only: reports which migrations are applied, changes nothing.
+            - name: Migration status
+              if: steps.guard.outputs.configured == 'true'
+              run: pnpm exec prisma migrate status

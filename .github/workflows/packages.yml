@@ -1,0 +1,68 @@
+name: Packages
+
+on:
+    push:
+        branches: ["**"]
+        paths:
+            - "packages/**"
+            - "turbo.json"
+            - "pnpm-workspace.yaml"
+            - ".github/workflows/packages.yml"
+    pull_request:
+        paths:
+            - "packages/**"
+            - "turbo.json"
+            - "pnpm-workspace.yaml"
+            - ".github/workflows/packages.yml"
+    workflow_dispatch:
+
+concurrency:
+    group: packages-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    # Offline placeholder — see the note in web.yml. Nothing here connects.
+    DATABASE_URL: postgresql://ci:ci@localhost:5432/placeholder
+    DIRECT_URL: postgresql://ci:ci@localhost:5432/placeholder
+
+jobs:
+    build:
+        name: Build and typecheck packages
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build every package
+              run: pnpm turbo run build
+
+            - name: Typecheck every package
+              run: pnpm -r --filter "./packages/*" typecheck
+
+            # Catches a package that compiles but ships a broken entrypoint:
+            # wrong `main`, a missing file, or an export that got renamed.
+            - name: Entrypoint resolves and exports the public API
+              run: |
+                  node -e "
+                    const db = require('./dist/index.js');
+                    const expected = [
+                      'prisma', 'listProjects', 'createProject', 'getProject',
+                      'renameProject', 'deleteProject', 'saveTree',
+                      'getDocument', 'saveDocument',
+                    ];
+                    const missing = expected.filter(k => typeof db[k] === 'undefined');
+                    if (missing.length) {
+                      console.error('missing exports:', missing.join(', '));
+                      process.exit(1);
+                    }
+                    console.log('ok — ' + expected.length + ' exports present');
+                  "
+              working-directory: packages/postgres

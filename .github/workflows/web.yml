@@ -1,0 +1,52 @@
+name: Web
+
+on:
+    push:
+        branches: ["**"]
+    pull_request:
+    workflow_dispatch:
+
+concurrency:
+    group: web-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    # Prisma refuses to read the schema unless BOTH datasource env vars exist,
+    # even for `generate`, which never opens a connection. `/projects` and
+    # `/projects/[id]` are force-dynamic, so `next build` never queries either —
+    # a placeholder is enough to typecheck and build the whole app.
+    DATABASE_URL: postgresql://ci:ci@localhost:5432/placeholder
+    DIRECT_URL: postgresql://ci:ci@localhost:5432/placeholder
+
+jobs:
+    build:
+        name: Typecheck and build
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            # Must come before setup-node so `cache: pnpm` can find the store.
+            # Version is read from package.json's `packageManager` field.
+            - uses: pnpm/action-setup@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  # pnpm 11 needs >= 22.13 and imports node:sqlite; Node 20 is
+                  # also deprecated on the runners.
+                  node-version: 24
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            # The app imports @mathscript/postgres, so its dist has to exist
+            # before tsc or next can resolve it.
+            - name: Build workspace packages
+              run: pnpm turbo run build
+
+            - name: Typecheck
+              run: pnpm typecheck
+
+            - name: Build Next.js app
+              run: pnpm exec next build
