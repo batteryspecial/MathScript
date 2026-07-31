@@ -1,6 +1,15 @@
 {
     "$schema": "https://turborepo.com/schema.json",
-    "globalEnv": ["DATABASE_URL", "DIRECT_URL"],
+    "globalEnv": [
+        "DATABASE_URL",
+        "DIRECT_URL",
+        "BETTER_AUTH_URL",
+        "BETTER_AUTH_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET"
+    ],
     "tasks": {
         "build": {
             "dependsOn": ["^build"],
