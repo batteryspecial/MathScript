@@ -5,7 +5,9 @@
 //   Document <- src/lib/latex/meta.ts       (DocumentMeta)
 //   Cell     <- src/lib/cells/types.ts      (Cell)
 //
-// No auth yet — a Project is reachable by anyone holding its id.
+// Ownership hangs off Project.userId alone — Node/Document/Cell cascade from
+// Project, so one edge covers the whole tree. Nullable: rows created before
+// auth have no owner and no reaper will ever collect them.
 
 generator client {
     provider = "prisma-client-js"
@@ -34,7 +36,11 @@ model Project {
     name      String   @default("Untitled project")
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    userId    String?
     nodes     Node[]
+    user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
 }
 
 /// One row per file or folder in the explorer tree.
@@ -89,66 +95,103 @@ model Cell {
 
 
 // --- Auth --------------------------------------------------
+// Anonymous users are ordinary rows with isAnonymous = true — the plugin does
+// not use a separate table, so every ownership query works for both kinds.
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+    id               String      @id
+    name             String
+    email            String
+    emailVerified    Boolean     @default(false)
+    image            String?
+    twoFactorEnabled Boolean     @default(false)
+    isAnonymous      Boolean     @default(false)
+    createdAt        DateTime    @default(now())
+    updatedAt        DateTime    @updatedAt
+    sessions         Session[]
+    accounts         Account[]
+    twoFactors       TwoFactor[]
+    projects         Project[]
 
-  @@unique([email])
-  @@map("user")
+    @@unique([email])
+    // The reaper scans for stale anonymous users; see packages/jobs.
+    @@index([isAnonymous, createdAt])
+    @@map("user")
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        String   @id
+    expiresAt DateTime
+    token     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    ipAddress String?
+    userAgent String?
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
-  @@index([userId])
-  @@map("session")
+    @@unique([token])
+    @@index([userId])
+    @@map("session")
 }
 
 model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
 
-  @@index([userId])
-  @@map("account")
+    @@index([userId])
+    @@map("account")
 }
 
 model Verification {
-  id         String   @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+    id         String   @id
+    identifier String
+    value      String
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
 
-  @@index([identifier])
-  @@map("verification")
+    @@index([identifier])
+    @@map("verification")
+}
+
+/// TOTP secret + backup codes. failedVerificationCount/lockedUntil are the
+/// plugin's own brute-force lockout, independent of the rateLimit table.
+model TwoFactor {
+    id                      String    @id
+    secret                  String
+    backupCodes             String
+    userId                  String
+    verified                Boolean   @default(true)
+    failedVerificationCount Int       @default(0)
+    lockedUntil             DateTime?
+    user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([secret])
+    @@index([userId])
+    @@map("twoFactor")
+}
+
+/// Written on every auth request when rateLimit.storage is "database".
+/// lastRequest is epoch milliseconds, not a timestamp.
+model RateLimit {
+    id          String @id
+    key         String
+    count       Int
+    lastRequest BigInt
+
+    @@unique([key])
+    @@map("rateLimit")
 }
 

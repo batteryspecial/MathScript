@@ -2,6 +2,7 @@ import { prisma } from "@mathscript/postgres";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { anonymous } from "better-auth/plugins/anonymous";
 import { twoFactor } from "better-auth/plugins/two-factor";
 
 export interface AuthEmail {
@@ -92,6 +93,18 @@ export function buildAuth(config: AuthConfig) {
         },
         plugins: [
             twoFactor({ issuer: "MathScript" }),
+            anonymous({
+                // Never delete on the conversion path: if reassignment fails midway
+                // the user loses their work at the moment they signed up. The row is
+                // emptied here and the reaper collects it later.
+                disableDeleteAnonymousUser: true,
+                onLinkAccount: async ({ anonymousUser, newUser }) => {
+                    await prisma.project.updateMany({
+                        where: { userId: anonymousUser.user.id },
+                        data: { userId: newUser.user.id },
+                    });
+                },
+            }),
             nextCookies(), // must stay last — it flushes Set-Cookie into the Next response
         ],
     });
