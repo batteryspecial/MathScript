@@ -47,8 +47,7 @@ jobs:
             - name: Typecheck every package
               run: pnpm -r --filter "./packages/*" typecheck
 
-            # Catches a package that compiles but ships a broken entrypoint:
-            # wrong `main`, a missing file, or an export that got renamed.
+            # Catches a package that compiles but ships a broken entrypoint
             - name: Entrypoint resolves and exports the public API
               run: |
                   node -e "

@@ -21,9 +21,7 @@ defaults:
         working-directory: packages/postgres
 
 jobs:
-    # Proves the migrations replay cleanly onto an empty database and that
-    # schema.prisma has not drifted away from them. Runs against a throwaway
-    # Postgres in the runner — never touches the real database.
+    # Proves the migrations replay cleanly onto an empty database
     schema:
         name: Migrations and drift
         runs-on: ubuntu-latest
@@ -42,7 +40,6 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
-
         env:
             DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mathscript_ci
             DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mathscript_ci
@@ -66,15 +63,13 @@ jobs:
             - name: Migrations apply to an empty database
               run: pnpm exec prisma migrate deploy
 
-            # `migrate diff` needs a scratch database to replay the migration
-            # history into before comparing it against schema.prisma.
+            # `migrate diff` needs a scratch database to replay the migration history into before comparing it against schema.prisma.
             - name: Create shadow database
               run: |
                   PGPASSWORD=postgres psql -h localhost -U postgres \
                     -c 'CREATE DATABASE mathscript_shadow;'
 
-            # Exit code 2 means schema.prisma changed without a matching
-            # migration — the usual cause of "works locally, breaks on deploy".
+            # Exit code 2 means schema.prisma changed without a matching migration
             - name: No drift between schema.prisma and migrations
               run: |
                   pnpm exec prisma migrate diff \
@@ -90,18 +85,31 @@ jobs:
                   PGPASSWORD=postgres psql -h localhost -U postgres -d mathscript_ci \
                     -tAc "select count(*) from information_schema.tables
                           where table_schema='public'
-                            and table_name in ('Project','Node','Document','Cell')" \
-                    | grep -qx 4
-
-    # Read-only reachability check against the real database. Skips itself
-    # cleanly when the secrets are not configured (forks, first-time setup).
+                            and table_name in ('Project','Node','Document','Cell',
+                                               'user','session','account','verification',
+                                               'twoFactor','rateLimit')" \
+                    | grep -qx 10
+            - name: Auth wiring is intact
+              run: |
+                  PGPASSWORD=postgres psql -h localhost -U postgres -d mathscript_ci \
+                    -tAc "select data_type from information_schema.columns
+                          where table_name='rateLimit' and column_name='lastRequest'" \
+                    | grep -qx bigint
+                  PGPASSWORD=postgres psql -h localhost -U postgres -d mathscript_ci \
+                    -tAc "select count(*) from information_schema.referential_constraints rc
+                          join information_schema.table_constraints tc
+                            on tc.constraint_name = rc.constraint_name
+                          where tc.table_name in ('Project','Node','Document','Cell',
+                                                  'session','account','twoFactor')
+                            and rc.delete_rule = 'CASCADE'" \
+                    | grep -qx 8
     connection:
-        name: Live database reachable
+        name: Testing branch reachable
         runs-on: ubuntu-latest
 
         env:
-            DATABASE_URL: ${{ secrets.DATABASE_URL }}
-            DIRECT_URL: ${{ secrets.DIRECT_URL }}
+            DATABASE_URL: ${{ secrets.TESTING_DATABASE_URL }}
+            DIRECT_URL: ${{ secrets.TESTING_DIRECT_URL }}
 
         steps:
             - uses: actions/checkout@v4
@@ -120,7 +128,7 @@ jobs:
               run: |
                   if [ -z "$DATABASE_URL" ] || [ -z "$DIRECT_URL" ]; then
                     echo "configured=false" >> "$GITHUB_OUTPUT"
-                    echo "::notice::DATABASE_URL / DIRECT_URL not set — skipping the live check."
+                    echo "::notice::TESTING_DATABASE_URL / TESTING_DIRECT_URL not set — skipping the testing-branch check."
                   else
                     echo "configured=true" >> "$GITHUB_OUTPUT"
                   fi
