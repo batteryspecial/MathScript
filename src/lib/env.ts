@@ -8,8 +8,8 @@ export const envSchema = z.object({
     BETTER_AUTH_SECRET: z.string().min(1, "BETTER_AUTH_SECRET is required"),
     GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
     GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
-    GITHUB_CLIENT_ID: z.string().min(1, "GITHUB_CLIENT_ID is required"),
-    GITHUB_CLIENT_SECRET: z.string().min(1, "GITHUB_CLIENT_SECRET is required"),
+    GIT_CLIENT_ID: z.string().min(1, "GIT_CLIENT_ID is required"),
+    GIT_CLIENT_SECRET: z.string().min(1, "GIT_CLIENT_SECRET is required"),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 

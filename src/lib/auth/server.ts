@@ -9,8 +9,8 @@ export const auth = buildAuth({
         clientSecret: env.GOOGLE_CLIENT_SECRET,
     },
     github: {
-        clientId: env.GITHUB_CLIENT_ID,
-        clientSecret: env.GITHUB_CLIENT_SECRET,
+        clientId: env.GIT_CLIENT_ID,
+        clientSecret: env.GIT_CLIENT_SECRET,
     },
     // TODO: Swap for Resend before any non-localhost signup
     sendEmail: async ({ to, subject, body }) => {

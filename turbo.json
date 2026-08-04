@@ -7,8 +7,8 @@
         "BETTER_AUTH_SECRET",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
-        "GITHUB_CLIENT_ID",
-        "GITHUB_CLIENT_SECRET"
+        "GIT_CLIENT_ID",
+        "GIT_CLIENT_SECRET"
     ],
     "tasks": {
         "build": {

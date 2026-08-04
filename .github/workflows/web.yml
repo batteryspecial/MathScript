@@ -18,8 +18,8 @@ env:
     BETTER_AUTH_SECRET: ci-placeholder-not-a-real-secret
     GOOGLE_CLIENT_ID: ci-placeholder
     GOOGLE_CLIENT_SECRET: ci-placeholder
-    GITHUB_CLIENT_ID: ci-placeholder
-    GITHUB_CLIENT_SECRET: ci-placeholder
+    GIT_CLIENT_ID: ci-placeholder
+    GIT_CLIENT_SECRET: ci-placeholder
 
 jobs:
     build:
