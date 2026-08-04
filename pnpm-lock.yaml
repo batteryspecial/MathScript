@@ -125,6 +125,19 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  packages/jobs:
+    dependencies:
+      '@mathscript/postgres':
+        specifier: workspace:*
+        version: link:../postgres
+    devDependencies:
+      '@types/node':
+        specifier: 25.2.3
+        version: 25.2.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/postgres:
     dependencies:
       '@prisma/client':
