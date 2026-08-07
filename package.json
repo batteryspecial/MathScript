@@ -15,10 +15,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@11.15.1",
+  "packageManager": "pnpm@11.20.0",
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@mathscript/auth": "workspace:*",
+    "@mathscript/jobs": "workspace:*",
     "@mathscript/postgres": "workspace:*",
     "@prisma/client": "^6.19.3",
     "@tailwindcss/postcss": "^4.1.18",

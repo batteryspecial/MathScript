@@ -1,0 +1,64 @@
+name: Cleanup Jobs
+on:
+    schedule:
+        # Minute 17 rather than 0 because GitHub queues every on-the-hour cron in the world at once and delays them under load.
+        - cron: "17 4 * * *"
+    workflow_dispatch:
+        inputs:
+            dryRun:
+                description: "Display what would be deleted (but nothing deleted)"
+                type: boolean
+                default: true
+            olderThanDays:
+                description: "Inactivity threshold (default 30 days)"
+                type: string
+                default: ""
+
+# Two reapers deleting the same rows is harmless, but we need to prevent long transactions against Neon
+concurrency:
+    group: cron-cleanup
+    cancel-in-progress: false
+
+jobs:
+    reap-anonymous-users:
+        name: Reap anonymous users
+        runs-on: ubuntu-latest
+
+        env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+            DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            # @mathscript/jobs imports @mathscript/postgres, so both dists have to exist before node can resolve the entrypoint
+            - name: Build workspace packages
+              run: pnpm turbo run build
+
+            - name: Fail fast if the database secrets are missing
+              run: |
+                  if [ -z "$DATABASE_URL" ] || [ -z "$DIRECT_URL" ]; then
+                    echo "::error::DATABASE_URL / DIRECT_URL are not configured."
+                    exit 1
+                  fi
+
+            # A scheduled run always deletes
+            - name: Reap
+              run: |
+                  set -eo pipefail
+                  ARGS="reap-anonymous-users"
+                  if [ "${{ inputs.dryRun }}" = "true" ]; then
+                    ARGS="$ARGS --dry-run"
+                  fi
+                  if [ -n "${{ inputs.olderThanDays }}" ]; then
+                    ARGS="$ARGS --older-than-days=${{ inputs.olderThanDays }}"
+                  fi
+                  node scripts/run-job.mjs $ARGS | tee "$GITHUB_STEP_SUMMARY"
