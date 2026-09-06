@@ -103,13 +103,13 @@ jobs:
                                                   'session','account','twoFactor')
                             and rc.delete_rule = 'CASCADE'" \
                     | grep -qx 8
-    connection:
-        name: Testing branch reachable
+    # Forks a throwaway branch off production for this run only,
+    # replays migrations onto it, and deletes it before the job ends.
+    ephemeral-branch:
+        name: Migrate a fresh branch of production
         runs-on: ubuntu-latest
-
-        env:
-            DATABASE_URL: ${{ secrets.TESTING_DATABASE_URL }}
-            DIRECT_URL: ${{ secrets.TESTING_DIRECT_URL }}
+        permissions:
+            contents: read
 
         steps:
             - uses: actions/checkout@v4
@@ -123,17 +123,54 @@ jobs:
               run: pnpm install --frozen-lockfile
               working-directory: .
 
-            - name: Are the secrets configured?
-              id: guard
-              run: |
-                  if [ -z "$DATABASE_URL" ] || [ -z "$DIRECT_URL" ]; then
-                    echo "configured=false" >> "$GITHUB_OUTPUT"
-                    echo "::notice::TESTING_DATABASE_URL / TESTING_DIRECT_URL not set — skipping the testing-branch check."
-                  else
-                    echo "configured=true" >> "$GITHUB_OUTPUT"
-                  fi
+            - name: Create branch
+              id: branch
+              uses: neondatabase/create-branch-action@v6
+              with:
+                  project_id: ${{ vars.NEON_PROJECT_ID }}
+                  parent: production
+                  branch_name: ci/${{ github.run_id }}
+                  api_key: ${{ secrets.NEON_API_KEY }}
 
-            # Read-only: reports which migrations are applied, changes nothing.
-            - name: Migration status
-              if: steps.guard.outputs.configured == 'true'
-              run: pnpm exec prisma migrate status
+            # NEVER echo $DATABASE_URL / $DIRECT_URL
+            - name: Migrations apply to a fresh branch of production
+              env:
+                  DATABASE_URL: ${{ steps.branch.outputs.db_url_with_pooler }}
+                  DIRECT_URL: ${{ steps.branch.outputs.db_url }}
+              run: pnpm exec prisma migrate deploy
+
+            - name: Every table was created
+              env:
+                  DIRECT_URL: ${{ steps.branch.outputs.db_url }}
+              run: |
+                  psql "$DIRECT_URL" -c '\dt' | tee /dev/stderr | grep -q 'Project'
+                  psql "$DIRECT_URL" -tAc "select count(*) from information_schema.tables
+                        where table_schema='public'
+                          and table_name in ('Project','Node','Document','Cell',
+                                             'user','session','account','verification',
+                                             'twoFactor','rateLimit')" \
+                    | grep -qx 10
+
+            - name: Auth wiring is intact
+              env:
+                  DIRECT_URL: ${{ steps.branch.outputs.db_url }}
+              run: |
+                  psql "$DIRECT_URL" -tAc "select data_type from information_schema.columns
+                        where table_name='rateLimit' and column_name='lastRequest'" \
+                    | grep -qx bigint
+                  psql "$DIRECT_URL" -tAc "select count(*) from information_schema.referential_constraints rc
+                        join information_schema.table_constraints tc
+                          on tc.constraint_name = rc.constraint_name
+                        where tc.table_name in ('Project','Node','Document','Cell',
+                                                'session','account','twoFactor')
+                          and rc.delete_rule = 'CASCADE'" \
+                    | grep -qx 8
+
+            # Runs even if a step above failed or the job was cancelled
+            - name: Delete branch
+              if: always()
+              uses: neondatabase/delete-branch-action@v3
+              with:
+                  project_id: ${{ vars.NEON_PROJECT_ID }}
+                  branch: ci/${{ github.run_id }}
+                  api_key: ${{ secrets.NEON_API_KEY }}

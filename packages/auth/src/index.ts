@@ -71,8 +71,7 @@ export function buildAuth(config: AuthConfig) {
         account: {
             accountLinking: {
                 enabled: true,
-                // Only providers that guarantee a verified email — otherwise an
-                // unverified OAuth address hands over someone's existing account.
+                // Only providers that guarantee a verified email
                 trustedProviders: ["google", "github"],
             },
         },
@@ -94,9 +93,7 @@ export function buildAuth(config: AuthConfig) {
         plugins: [
             twoFactor({ issuer: "MathScript" }),
             anonymous({
-                // Never delete on the conversion path: if reassignment fails midway
-                // the user loses their work at the moment they signed up. The row is
-                // emptied here and the reaper collects it later.
+                // Never delete on the conversion path
                 disableDeleteAnonymousUser: true,
                 onLinkAccount: async ({ anonymousUser, newUser }) => {
                     await prisma.project.updateMany({
