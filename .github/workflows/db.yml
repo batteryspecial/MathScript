@@ -135,7 +135,7 @@ jobs:
             # NEVER echo $DATABASE_URL / $DIRECT_URL
             - name: Migrations apply to a fresh branch of production
               env:
-                  DATABASE_URL: ${{ steps.branch.outputs.db_url_with_pooler }}
+                  DATABASE_URL: ${{ steps.branch.outputs.db_url_pooled }}
                   DIRECT_URL: ${{ steps.branch.outputs.db_url }}
               run: pnpm exec prisma migrate deploy
 
