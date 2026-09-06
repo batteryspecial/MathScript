@@ -128,7 +128,7 @@ jobs:
               uses: neondatabase/create-branch-action@v6
               with:
                   project_id: ${{ vars.NEON_PROJECT_ID }}
-                  parent: production
+                  parent_branch: production
                   branch_name: ci/${{ github.run_id }}
                   api_key: ${{ secrets.NEON_API_KEY }}
 
