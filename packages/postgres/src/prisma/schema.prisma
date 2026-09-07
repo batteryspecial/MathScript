@@ -1,13 +1,11 @@
 // --- Document Persistence ----------------------------------
-// The models mirror the in-memory types the app already uses, so the mapping
-// stays mechanical:
+// The models mirror the in-memory types the app already uses.
 //   Node     <- src/lib/workspace/types.ts  (TreeNode)
 //   Document <- src/lib/latex/meta.ts       (DocumentMeta)
 //   Cell     <- src/lib/cells/types.ts      (Cell)
 //
-// Ownership hangs off Project.userId alone — Node/Document/Cell cascade from
-// Project, so one edge covers the whole tree. Nullable: rows created before
-// auth have no owner and no reaper will ever collect them.
+// OWNERSHIP: Project.userId -> Node/Document/Cell cascade from Project
+// NOTE: rows created before auth have no owner (nullable)
 
 generator client {
     provider = "prisma-client-js"
@@ -15,8 +13,8 @@ generator client {
 
 datasource db {
     provider  = "postgresql"
-    url       = env("DATABASE_URL") // Neon pooler — runtime queries
-    directUrl = env("DIRECT_URL") // Neon unpooled — migrations
+    url       = env("DATABASE_URL") // Neon pooler (runtime queries)
+    directUrl = env("DIRECT_URL") // Neon unpooled (migrations)
 }
 
 enum NodeKind {
@@ -43,7 +41,7 @@ model Project {
     @@index([userId])
 }
 
-/// One row per file or folder in the explorer tree.
+// One row per file or folder in the explorer tree.
 model Node {
     id        String    @id // client-generated UUID (filetree.ts newId())
     projectId String
@@ -61,7 +59,7 @@ model Node {
     @@index([parentId])
 }
 
-/// The notebook behind a file node — carries the LaTeX document metadata.
+// The notebook behind a file node (carries the LaTeX document metadata).
 model Document {
     id           String   @id @default(uuid())
     nodeId       String   @unique
@@ -88,15 +86,14 @@ model Cell {
     equationContent String?
     label           String?
 
-    // Deliberately not @@unique — a bulk reorder writes overlapping positions
-    // inside one transaction before it settles.
+    // Deliberately not @@unique, because a bulk reorder writes 
+    // overlapping positions inside one transaction before it settles.
     @@index([documentId, position])
 }
 
 
 // --- Auth --------------------------------------------------
-// Anonymous users are ordinary rows with isAnonymous = true — the plugin does
-// not use a separate table, so every ownership query works for both kinds.
+// Anonymous users are ordinary rows with isAnonymous = true
 model User {
     id               String      @id
     name             String
@@ -166,8 +163,8 @@ model Verification {
     @@map("verification")
 }
 
-/// TOTP secret + backup codes. failedVerificationCount/lockedUntil are the
-/// plugin's own brute-force lockout, independent of the rateLimit table.
+// TOTP secret + backup codes. failedVerificationCount/lockedUntil are the
+// plugin's own brute-force lockout, independent of the rateLimit table.
 model TwoFactor {
     id                      String    @id
     secret                  String
@@ -183,8 +180,8 @@ model TwoFactor {
     @@map("twoFactor")
 }
 
-/// Written on every auth request when rateLimit.storage is "database".
-/// lastRequest is epoch milliseconds, not a timestamp.
+// Written on every auth request when rateLimit.storage is "database".
+// lastRequest is epoch milliseconds, not a timestamp.
 model RateLimit {
     id          String @id
     key         String

@@ -1,4 +1,5 @@
 export { prisma } from "./client";
+export { QueryError, type QueryErrorCode } from "./errors";
 
 export {
     listProjects,
@@ -10,6 +11,7 @@ export {
 } from "./queries/project";
 
 export { getDocument, saveDocument } from "./queries/document";
+export { isProjectOwner, assertProjectOwner } from "./queries/auth";
 
 export type {
     CellInput,

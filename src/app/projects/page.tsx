@@ -59,7 +59,7 @@ export default async function Page() {
                             </Link>
                             <span className={styles.cardId}>{project.id.slice(0, 8)}</span>
                             <span className={styles.cardMeta}>
-                                Edited {formatDistanceToNow(project.updatedAt, { addSuffix: true })}
+                                edited {formatDistanceToNow(project.updatedAt, { addSuffix: true })}
                             </span>
                             {/* Tailwind here rather than the CSS module: the
                                 button's own variant classes would fight a
@@ -75,7 +75,7 @@ export default async function Page() {
                                 }
                                 variant="ghost"
                                 size="icon-xs"
-                                className="absolute top-1 right-1 z-[1] text-[var(--ms-tab-border)] hover:text-[#c0392b]"
+                                className="absolute top-1 right-1 z-1 text-var(--ms-tab-border) hover:text-[#c0392b]"
                                 title={`Delete ${project.name}`}
                                 aria-label={`Delete ${project.name}`}
                             >
