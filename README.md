@@ -1,3 +1,6 @@
+<img width="378" height="314" alt="mathscript" src="https://github.com/user-attachments/assets/2dc5ef56-93ea-49a0-9a00-4f3f9346e08a" />
+
+
 # MathScript
 
 Write mathematical proofs in notebooks online.
