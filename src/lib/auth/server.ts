@@ -12,6 +12,10 @@ export const auth = buildAuth({
         clientId: env.GIT_CLIENT_ID,
         clientSecret: env.GIT_CLIENT_SECRET,
     },
+    // Vercel edge sets this and nothing upstream can overwrite it
+    // Absent in dev → localhost.
+    ipAddressHeaders: ["x-vercel-forwarded-for"],
+    
     // TODO: Swap for Resend before any non-localhost signup
     sendEmail: async ({ to, subject, body }) => {
         console.log(`[auth email] to=${to} subject=${subject}\n${body}`);

@@ -5,13 +5,16 @@ import { listProjects } from "@mathscript/postgres";
 
 import { ActionButton } from "@/components/ui/action-button";
 import { deleteProjectAction, newProjectAction } from "@/lib/db/actions";
+import { getSession } from "@/lib/auth/session";
 import chrome from "../landing.module.css";
 import styles from "./projects.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-    const projects = await listProjects();
+    // No session means no projects
+    const session = await getSession();
+    const projects = session ? await listProjects(session.user.id) : [];
 
     return (
         <div className={chrome.page}>
