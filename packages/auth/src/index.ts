@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins/anonymous";
+import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
 import { twoFactor } from "better-auth/plugins/two-factor";
 
 export interface AuthEmail {
@@ -26,6 +27,8 @@ export interface AuthConfig {
     // Extra origins allowed to make state-changing requests. 
     // CSRF + OAuth callback allow-list.
     trustedOrigins?: string[];
+    // Client-IP headers set by the host, never by the client. Wrong value = spoofable rate limits.
+    ipAddressHeaders?: string[];
 }
 
 export function buildAuth(config: AuthConfig) {
@@ -38,11 +41,16 @@ export function buildAuth(config: AuthConfig) {
         // client and server are same-origin in next.js
         // no cors, no domain attribute, no subdomain sharing
         trustedOrigins: [config.baseURL, ...(config.trustedOrigins ?? [])],
-        advanced: { useSecureCookies: config.baseURL.startsWith("https://") },
+        advanced: {
+            useSecureCookies: config.baseURL.startsWith("https://"),
+            ipAddress: { ipAddressHeaders: config.ipAddressHeaders },
+        },
 
         emailAndPassword: {
             enabled: true,
-            requireEmailVerification: true,
+            // Off until email delivery exists. Turn back on before launch: without it
+            // anyone can sign up as an address they don't own.
+            requireEmailVerification: false,
             minPasswordLength: 12,
             revokeSessionsOnPasswordReset: true,
             sendResetPassword: async ({ user, url }) => {
@@ -54,7 +62,7 @@ export function buildAuth(config: AuthConfig) {
             },
         },
         emailVerification: {
-            sendOnSignUp: true,
+            sendOnSignUp: false,
             autoSignInAfterVerification: true,
             sendVerificationEmail: async ({ user, url }) => {
                 await config.sendEmail({
@@ -91,6 +99,9 @@ export function buildAuth(config: AuthConfig) {
             },
         },
         plugins: [
+            // k-anonymity range lookup, only a 5-char hash prefix leaves the server.
+            // Fails sign-up w/ 500 while the HIBP API is down.
+            haveIBeenPwned(),
             twoFactor({ issuer: "MathScript" }),
             anonymous({
                 // Never delete on the conversion path
@@ -102,7 +113,7 @@ export function buildAuth(config: AuthConfig) {
                     });
                 },
             }),
-            nextCookies(), // must stay last — it flushes Set-Cookie into the Next response
+            nextCookies(), // ! MUST BE LAST ! flushes Set-Cookie into the Next response
         ],
     });
 }

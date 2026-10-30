@@ -13,7 +13,8 @@
     },
     "scripts": {
         "build": "tsc",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "test": "node --env-file=../../.env --test \"tests/*.test.ts\""
     },
     "dependencies": {
         "@mathscript/postgres": "workspace:*",
