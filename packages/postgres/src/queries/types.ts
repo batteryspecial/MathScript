@@ -1,4 +1,4 @@
-import type { CellType, NodeKind } from "@prisma/client";
+import type { CellType, NodeKind } from "../generated/prisma/client";
 
 export type { CellType, NodeKind };
 

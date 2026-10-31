@@ -8,13 +8,14 @@
 // NOTE: rows created before auth have no owner (nullable)
 
 generator client {
-    provider = "prisma-client-js"
+    provider     = "prisma-client"
+    output       = "../generated/prisma"
+    moduleFormat = "cjs"
 }
 
+// Connection URLs live in prisma.config.ts (CLI) and client.ts (runtime adapter)
 datasource db {
-    provider  = "postgresql"
-    url       = env("DATABASE_URL") // Neon pooler (runtime queries)
-    directUrl = env("DIRECT_URL") // Neon unpooled (migrations)
+    provider = "postgresql"
 }
 
 enum NodeKind {

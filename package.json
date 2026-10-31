@@ -21,7 +21,6 @@
     "@mathscript/auth": "workspace:*",
     "@mathscript/jobs": "workspace:*",
     "@mathscript/postgres": "workspace:*",
-    "@prisma/client": "^6.19.3",
     "@tailwindcss/postcss": "^4.1.18",
     "better-auth": "^1.6.25",
     "class-variance-authority": "^0.7.1",
@@ -51,7 +50,6 @@
     "@tailwindcss/node": "^4.3.3",
     "@types/node": "25.2.3",
     "@types/react": "19.2.14",
-    "prisma": "^6.19.3",
     "turbo": "^2.6.1",
     "typescript": "5.9.3"
   }

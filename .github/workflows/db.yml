@@ -63,7 +63,8 @@ jobs:
             - name: Migrations apply to an empty database
               run: pnpm exec prisma migrate deploy
 
-            # `migrate diff` needs a scratch database to replay the migration history into before comparing it against schema.prisma.
+            # `migrate diff` replays the migration history into a scratch database before comparing it against schema.prisma.
+            # Prisma 7 reads that database from prisma.config.ts (SHADOW_DATABASE_URL), not a CLI flag.
             - name: Create shadow database
               run: |
                   PGPASSWORD=postgres psql -h localhost -U postgres \
@@ -74,8 +75,7 @@ jobs:
               run: |
                   pnpm exec prisma migrate diff \
                     --from-migrations ./src/prisma/migrations \
-                    --to-schema-datamodel ./src/prisma/schema.prisma \
-                    --shadow-database-url "$SHADOW_DATABASE_URL" \
+                    --to-schema ./src/prisma/schema.prisma \
                     --exit-code
 
             - name: Every table was created

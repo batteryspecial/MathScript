@@ -21,4 +21,4 @@ export type {
     TreeNodeInput,
 } from "./queries/types";
 
-export type { Cell, Document, Node, Project } from "@prisma/client";
+export type { Cell, Document, Node, Project } from "./generated/prisma/client";
