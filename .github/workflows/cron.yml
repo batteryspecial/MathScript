@@ -10,7 +10,7 @@ on:
                 type: boolean
                 default: true
             olderThanDays:
-                description: "Inactivity threshold (default 30 days)"
+                description: "Override every age threshold in days (defaults: anonymous 30, unverified 3)"
                 type: string
                 default: ""
 
@@ -20,8 +20,8 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
-    reap-anonymous-users:
-        name: Reap anonymous users
+    cleanup:
+        name: Cleanup jobs
         runs-on: ubuntu-latest
 
         env:
@@ -51,14 +51,16 @@ jobs:
                   fi
 
             # A scheduled run always deletes
-            - name: Reap
+            - name: Run every cleanup job
               run: |
                   set -eo pipefail
-                  ARGS="reap-anonymous-users"
+                  FLAGS=""
                   if [ "${{ inputs.dryRun }}" = "true" ]; then
-                    ARGS="$ARGS --dry-run"
+                    FLAGS="$FLAGS --dry-run"
                   fi
                   if [ -n "${{ inputs.olderThanDays }}" ]; then
-                    ARGS="$ARGS --older-than-days=${{ inputs.olderThanDays }}"
+                    FLAGS="$FLAGS --older-than-days=${{ inputs.olderThanDays }}"
                   fi
-                  node scripts/run-job.mjs $ARGS | tee "$GITHUB_STEP_SUMMARY"
+                  for JOB in reap-anonymous-users reap-unverified-users purge-expired-auth-rows; do
+                    node scripts/run-job.mjs $JOB $FLAGS | tee -a "$GITHUB_STEP_SUMMARY"
+                  done

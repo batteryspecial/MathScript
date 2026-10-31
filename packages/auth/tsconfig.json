@@ -11,6 +11,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
+        "rewriteRelativeImportExtensions": true,
         "rootDir": "src",
         "outDir": "dist"
     },

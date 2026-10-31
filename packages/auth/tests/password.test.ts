@@ -4,13 +4,13 @@ import assert from "node:assert/strict";
 
 import { prisma } from "@mathscript/postgres";
 
-import { call, freshEmail } from "./test_harness.ts";
+import { cleanup, client, freshEmail } from "./test_harness.ts";
 
-after(() => prisma.$disconnect());
+after(() => cleanup());
 
 test("rejects a password under 12 characters", async () => {
     const email = freshEmail();
-    const res = await call("/sign-up/email", { email, password: "Sh0rt!", name: "t" });
+    const res = await client().call("/sign-up/email", { email, password: "Sh0rt!", name: "t" });
 
     assert.equal(res.status, 400);
     assert.equal(res.json?.code, "PASSWORD_TOO_SHORT");
@@ -19,7 +19,7 @@ test("rejects a password under 12 characters", async () => {
 
 test("rejects a long but breached password", async () => {
     const email = freshEmail();
-    const res = await call("/sign-up/email", { email, password: "password1234", name: "t" });
+    const res = await client().call("/sign-up/email", { email, password: "password1234", name: "t" });
 
     assert.equal(res.status, 400);
     assert.equal(res.json?.code, "PASSWORD_COMPROMISED");
