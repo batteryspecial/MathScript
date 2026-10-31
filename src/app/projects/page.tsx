@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { listProjects } from "@mathscript/postgres";
 
 import { ActionButton } from "@/components/ui/action-button";
+import { SiteNav } from "@/components/layout/SiteNav";
 import { deleteProjectAction, newProjectAction } from "@/lib/db/actions";
 import { getSession } from "@/lib/auth/session";
 import chrome from "../landing.module.css";
@@ -18,22 +19,7 @@ export default async function Page() {
 
     return (
         <div className={chrome.page}>
-            <header className={chrome.nav}>
-                <nav className={chrome.navInner}>
-                    <Link href="/" className={chrome.wordmark}>
-                        Math<span>Script</span>
-                    </Link>
-                    <Link href="/projects" className={chrome.navLink}>
-                        Projects
-                    </Link>
-                    <a href="#" className={chrome.navLink}>
-                        Documentation
-                    </a>
-                    <a href="#" className={chrome.navLink}>
-                        Account
-                    </a>
-                </nav>
-            </header>
+            <SiteNav />
 
             <main className={chrome.inner}>
                 <div className={styles.head}>

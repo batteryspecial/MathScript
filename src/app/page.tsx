@@ -19,7 +19,7 @@ const NAV = [
     { label: "Projects", href: "/projects" },
     { label: "About", href: "#" },
     { label: "Documentation", href: "#" },
-    { label: "Account", href: "#" },
+    { label: "Account", href: "/account" },
     { label: "Settings", href: "#" },
 ];
 

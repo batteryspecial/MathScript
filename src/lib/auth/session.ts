@@ -28,3 +28,9 @@ export async function ensureUserId() {
     const { user } = await auth.api.signInAnonymous({ headers: await headers() });
     return user.id;
 }
+
+/** A signed-in user's session; anonymous sessions don't count. */
+export async function getAccountSession() {
+    const session = await getSession();
+    return session && !session.user.isAnonymous ? session : null;
+}
