@@ -20,7 +20,9 @@ export async function newProjectAction() {
     redirect(`/projects/${id}`);
 }
 
-/** Shaped for <ActionButton>, which toasts `message` whenever `error` is true. */
+/**
+ * Shaped for <ActionButton>, which toasts message whenever error is true.
+ */
 export async function deleteProjectAction(
     id: string,
 ): Promise<{ error: boolean; message?: string }> {

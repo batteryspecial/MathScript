@@ -1,6 +1,7 @@
 import { prisma } from "@mathscript/postgres";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins/anonymous";
 import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
@@ -106,6 +107,24 @@ export function buildAuth(config: AuthConfig) {
                 });
             },
         },
+        user: {
+            deleteUser: {
+                enabled: true,
+                // `verification` has no FK to user: reset tokens, 2FA challenges and trusted devices
+                // keep the id in `value`, so the cascade can't reach them.
+                afterDelete: async (user) => {
+                    await prisma.verification.deleteMany({ where: { value: user.id } });
+                },
+            },
+        },
+        hooks: {
+            // Without a password, /delete-user falls back to "session younger than a day" and deletes on that alone
+            before: createAuthMiddleware(async (ctx) => {
+                if (ctx.path === "/delete-user" && !ctx.body?.password) {
+                    throw new APIError("BAD_REQUEST", { message: "Password required", code: "PASSWORD_REQUIRED" });
+                }
+            }),
+        },
         socialProviders: {
             google: config.google,
             github: config.github,
@@ -134,6 +153,7 @@ export function buildAuth(config: AuthConfig) {
                 "/reset-password": { window: 60, max: 5 },
                 "/change-password": { window: 60, max: 5 },
                 "/update-user": { window: 60, max: 10 },
+                "/delete-user": { window: 60, max: 5 },
                 "/two-factor/enable": { window: 60, max: 5 },
                 "/two-factor/disable": { window: 60, max: 5 },
                 "/two-factor/generate-backup-codes": { window: 60, max: 5 },

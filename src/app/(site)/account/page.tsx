@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { DeleteAccountSection } from "@/components/account/DeleteAccountSection";
 import { PasswordSection } from "@/components/account/PasswordSection";
 import { ProfileSection } from "@/components/account/ProfileSection";
 import { SessionsSection } from "@/components/account/SessionsSection";
@@ -44,6 +45,7 @@ export default async function AccountPage() {
             <TwoFactorSection enabled={!!user.twoFactorEnabled} hasPassword={hasPassword} />
             <SessionsSection sessions={devices} />
             <SignOutSection />
+            <DeleteAccountSection name={user.name} hasPassword={hasPassword} />
         </AuthPage>
     );
 }
