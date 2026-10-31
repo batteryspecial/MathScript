@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 
 import { createProject, prisma } from "@mathscript/postgres";
 
-import { call, freshEmail, strongPassword } from "./harness.ts";
+import { call, freshEmail, strongPassword } from "./test_harness.ts";
 
 const created: string[] = [];
 

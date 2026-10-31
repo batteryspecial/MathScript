@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 
 import { prisma } from "@mathscript/postgres";
 
-import { call, freshEmail } from "./harness.ts";
+import { call, freshEmail } from "./test_harness.ts";
 
 after(() => prisma.$disconnect());
 
